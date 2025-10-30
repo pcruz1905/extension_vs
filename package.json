@@ -1,0 +1,72 @@
+{
+  "name": "extension_vs",
+  "displayName": "Sellhubb Liquid IntelliSense",
+  "description": "IntelliSense for Sellhubb Liquid templates with island components",
+  "version": "0.0.1",
+  "publisher": "sellhubb",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onLanguage:liquid"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sellhubb.syncComponents",
+        "title": "Sellhubb: Sync Components from KV",
+        "category": "Sellhubb"
+      }
+    ],
+    "configuration": {
+      "title": "Sellhubb",
+      "properties": {
+        "sellhubb.kvAccountId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare account ID for accessing KV"
+        },
+        "sellhubb.kvNamespaceId": {
+          "type": "string",
+          "default": "",
+          "description": "KV namespace ID where components are stored"
+        },
+        "sellhubb.kvApiToken": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare API token with KV read permissions"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.3",
+    "ts-loader": "^9.5.4",
+    "webpack": "^5.102.0",
+    "webpack-cli": "^6.0.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

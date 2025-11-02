@@ -1,26 +1,103 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { KVClient } from './kv/kvClient';
+import { LiquidCompletionProvider } from './completion/liquidCompletion';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let kvClient: KVClient;
+
 export function activate(context: vscode.ExtensionContext) {
+	console.log('Sellhub Liquid IntelliSense extension is now active');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "sellhub-extension" is now active!');
+	// Initialize KV client
+	kvClient = new KVClient();
+	kvClient.updateConfig();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('sellhub-extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from sellhub_extension!');
+	// Create completion provider
+	const completionProvider = new LiquidCompletionProvider(kvClient);
+
+	// Register completion provider for Liquid files
+	const completionDisposable = vscode.languages.registerCompletionItemProvider(
+		{ language: 'liquid', scheme: 'file' },
+		completionProvider,
+		'"', "'", '{', ' ', ':', // Trigger characters
+	);
+
+	// Register hover provider for component documentation
+	const hoverDisposable = vscode.languages.registerHoverProvider(
+		{ language: 'liquid', scheme: 'file' },
+		{
+			provideHover: (document, position) => completionProvider.provideHover(document, position)
+		}
+	);
+
+	// Command: Refresh component cache
+	const refreshCacheCommand = vscode.commands.registerCommand('sellhubb.refreshCache', () => {
+		kvClient.clearCache();
 	});
 
-	context.subscriptions.push(disposable);
+	// Command: Sync components from KV
+	const syncComponentsCommand = vscode.commands.registerCommand('sellhubb.syncComponents', async () => {
+		try {
+			vscode.window.showInformationMessage('Syncing components from Cloudflare KV...');
+			const manifest = await kvClient.getComponentManifest();
+			vscode.window.showInformationMessage(`Synced ${manifest.components.length} components successfully`);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`Failed to sync components: ${errorMessage}`);
+		}
+	});
+
+	// Command: Show cache stats (for debugging)
+	const cacheStatsCommand = vscode.commands.registerCommand('sellhubb.showCacheStats', () => {
+		const stats = kvClient.getCacheStats();
+		vscode.window.showInformationMessage(
+			`Cache stats - Manifest: ${stats.manifestCached ? 'cached' : 'not cached'}, Metadata entries: ${stats.metadataCacheSize}`
+		);
+	});
+
+	// Command: Test KV connection
+	const testConnectionCommand = vscode.commands.registerCommand('sellhubb.testConnection', async () => {
+		const config = vscode.workspace.getConfiguration('sellhubb');
+		const accountId = config.get<string>('kvAccountId');
+		const namespaceId = config.get<string>('kvNamespaceId');
+		const apiToken = config.get<string>('kvApiToken');
+
+		if (!accountId || !namespaceId || !apiToken) {
+			vscode.window.showErrorMessage('Missing KV credentials. Please configure all settings.');
+			return;
+		}
+
+		vscode.window.showInformationMessage(`Testing KV connection...\nAccount: ${accountId.substring(0, 8)}...\nNamespace: ${namespaceId.substring(0, 8)}...`);
+
+		try {
+			await kvClient.getComponentManifest();
+			vscode.window.showInformationMessage('✓ KV connection successful!');
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			vscode.window.showErrorMessage(`✗ KV connection failed: ${errorMessage}`);
+		}
+	});
+
+	// Listen for configuration changes
+	const configChangeDisposable = vscode.workspace.onDidChangeConfiguration(event => {
+		if (event.affectsConfiguration('sellhubb')) {
+			console.log('Sellhubb configuration changed, updating KV client...');
+			kvClient.updateConfig();
+			kvClient.clearCache(); // Clear cache when config changes
+		}
+	});
+
+	// Add all disposables to subscriptions
+	context.subscriptions.push(
+		completionDisposable,
+		hoverDisposable,
+		refreshCacheCommand,
+		syncComponentsCommand,
+		cacheStatsCommand,
+		testConnectionCommand,
+		configChangeDisposable
+	);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+	// Cleanup if needed
+}

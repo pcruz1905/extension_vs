@@ -1,71 +1,193 @@
-# sellhub-extension README
+# Sellhubb Liquid IntelliSense
 
-This is the README for your extension "sellhub-extension". After writing up a brief description, we recommend including the following sections.
+Intelligent autocomplete and documentation for Sellhubb Liquid templates with island components powered by Cloudflare KV.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+This extension provides smart autocomplete for your custom Liquid `{% island %}` tags by fetching component metadata directly from Cloudflare KV.
 
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Component Name Autocomplete**: Get suggestions for component names when typing `{% island "`
+- **Props Autocomplete**: Get intelligent suggestions for component props inside `props: { }`
+- **Type Information**: See prop types (string, number, boolean, etc.) and whether they're required
+- **Hover Documentation**: Hover over component names to see descriptions and prop details
+- **Smart Caching**: Component metadata is cached for 5 minutes to minimize API calls
+- **Real-time Updates**: Sync latest components from KV with a single command
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- **Cloudflare Account** with KV namespace containing component metadata
+- **API Token** with KV read permissions
+- **Liquid Extension** (recommended): [Liquid by panoply](https://marketplace.visualstudio.com/items?itemName=panoply.liquid) for syntax highlighting
+
+## Installation
+
+### 1. Install the Extension
+
+#### From Source (Development)
+```bash
+cd extension_vs
+npm install
+npm run compile
+```
+
+Then press `F5` in VS Code to launch the extension in debug mode.
+
+#### Package as VSIX
+```bash
+npm install -g @vscode/vsce
+cd extension_vs
+vsce package
+```
+
+Then install the `.vsix` file: `Extensions: Install from VSIX...`
+
+### 2. Configure Cloudflare Credentials
+
+Open VS Code settings (File > Preferences > Settings) and configure:
+
+```json
+{
+  "sellhubb.kvAccountId": "your-cloudflare-account-id",
+  "sellhubb.kvNamespaceId": "your-kv-namespace-id",
+  "sellhubb.kvApiToken": "your-api-token-with-kv-read-permissions"
+}
+```
+
+**Finding your credentials:**
+- **Account ID**: Found in Cloudflare Dashboard > Workers & Pages > Overview
+- **Namespace ID**: Workers & Pages > KV > Your namespace
+- **API Token**: My Profile > API Tokens > Create Token (requires KV read permission)
+
+## Usage
+
+### Component Name Autocomplete
+
+When you type an island tag, you'll get autocomplete for component names:
+
+```liquid
+{% island "add-to-cart" props: { productId: "123" } %}
+          ^
+          Start typing here to see component suggestions
+```
+
+### Props Autocomplete
+
+After typing `props: {`, you'll get autocomplete for available props:
+
+```liquid
+{% island "cart-counter" props: {
+  productId: "123",
+  ^
+  Autocomplete shows available props with types and descriptions
+} %}
+```
+
+### Hover Documentation
+
+Hover over a component name to see:
+- Component description
+- Available props with types
+- Required vs optional props
+
+### Commands
+
+Access these commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+- **Sellhubb: Sync Components from KV** - Fetch latest component manifest
+- **Sellhubb: Refresh Component Cache** - Clear cached data and fetch fresh
+- **Sellhubb: Show Cache Statistics** - View current cache status (for debugging)
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- `sellhubb.kvAccountId`: Cloudflare account ID for accessing KV
+- `sellhubb.kvNamespaceId`: KV namespace ID where components are stored
+- `sellhubb.kvApiToken`: Cloudflare API token with KV read permissions
 
-## Known Issues
+## KV Data Structure
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+The extension expects the following keys in your KV namespace:
+
+### Component Manifest
+**Key**: `components:manifest`
+
+```json
+{
+  "components": ["add-to-cart", "cart-counter", "price-display"],
+  "version": "v1",
+  "generatedAt": "2025-11-01T15:26:37.630Z"
+}
+```
+
+### Component Metadata
+**Key**: `component:<name>:metadata`
+
+```json
+{
+  "name": "cart-counter",
+  "description": "Counter for cart quantity",
+  "props": {
+    "productId": {
+      "type": "string",
+      "required": true,
+      "description": "Product identifier"
+    },
+    "productTitle": {
+      "type": "string",
+      "required": true,
+      "description": "Product title"
+    }
+  }
+}
+```
+
+## Development
+
+### Building
+```bash
+npm run compile       # Build once
+npm run watch         # Watch mode
+npm run package       # Production build
+```
+
+### Testing
+```bash
+npm run test
+```
+
+### Debugging
+1. Open the extension folder in VS Code
+2. Press `F5` to launch Extension Development Host
+3. Open a `.liquid` file and test autocomplete
+
+## Troubleshooting
+
+**Autocomplete not working?**
+- Check that your Cloudflare credentials are configured correctly
+- Run "Sellhubb: Sync Components from KV" to verify connection
+- Check the Output panel (View > Output > Sellhubb Liquid IntelliSense) for errors
+
+**Components not showing up?**
+- Verify the `components:manifest` key exists in your KV namespace
+- Check that component metadata keys follow the pattern: `component:<name>:metadata`
+- Try "Sellhubb: Refresh Component Cache" to clear and reload
+
+**Authentication errors?**
+- Ensure your API token has KV read permissions
+- Verify your Account ID and Namespace ID are correct
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Initial release featuring:
+- Component name autocomplete for `{% island %}` tags
+- Props autocomplete with type information
+- Hover documentation for components
+- 5-minute caching to optimize API calls
+- Manual sync and refresh commands
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Built with love for the Sellhubb platform**

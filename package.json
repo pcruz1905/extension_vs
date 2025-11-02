@@ -21,6 +21,21 @@
         "command": "sellhubb.syncComponents",
         "title": "Sellhubb: Sync Components from KV",
         "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.refreshCache",
+        "title": "Sellhubb: Refresh Component Cache",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.showCacheStats",
+        "title": "Sellhubb: Show Cache Statistics",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.testConnection",
+        "title": "Sellhubb: Test KV Connection",
+        "category": "Sellhubb"
       }
     ],
     "configuration": {
@@ -46,12 +61,15 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test"
   },

@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
-import { KVClient } from '../kv/kvClient';
-import type { ComponentMetadata } from '../types';
+import * as vscode from "vscode";
+import { KVClient } from "../kv/kvClient";
+import type { ComponentMetadata } from "../types";
 
 /**
  * Completion provider for Sellhubb Liquid components
@@ -32,24 +32,17 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   }
 
   /**
-   * Check if cursor is inside an island tag: {% island "..."
+   * Check if cursor is inside an island tag: {% island "..." or {{ island "..."
    */
   private isIslandTagContext(textBeforeCursor: string): boolean {
-    // Match: {% island "
-    // Also match variations like {%island" or {% island   "
-    const islandPattern = /\{%\s*island\s+["']/;
+    // Match partial island openings like:
+    // {{ island "
+    // {% island 'some
+    // {{ island   "foo
+    const islandPattern = /\{[{%]\s*island\s+["'][^"']*$/;
     const match = textBeforeCursor.match(islandPattern);
 
-    if (!match) {
-      return false;
-    }
-
-    // Make sure we're still inside the quotes (haven't closed them yet)
-    const afterIslandTag = textBeforeCursor.substring(match.index! + match[0].length);
-    const closingQuote = match[0].endsWith('"') ? '"' : "'";
-
-    // If there's no closing quote yet, or cursor is before it, we're in the right context
-    return !afterIslandTag.includes(closingQuote) || afterIslandTag.lastIndexOf(closingQuote) < afterIslandTag.length - 1;
+    return !!match;
   }
 
   /**
@@ -65,7 +58,9 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     }
 
     // Count braces to ensure we're still inside the props object
-    const afterProps = textBeforeCursor.substring(match.index! + match[0].length);
+    const afterProps = textBeforeCursor.substring(
+      match.index! + match[0].length
+    );
     const openBraces = (afterProps.match(/\{/g) || []).length;
     const closeBraces = (afterProps.match(/\}/g) || []).length;
 
@@ -75,7 +70,10 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Extract component name from the island tag in the current scope
    */
-  private getComponentNameInScope(document: vscode.TextDocument, position: vscode.Position): string | null {
+  private getComponentNameInScope(
+    document: vscode.TextDocument,
+    position: vscode.Position
+  ): string | null {
     // Search backwards from current position to find the island tag
     for (let i = position.line; i >= Math.max(0, position.line - 20); i--) {
       const lineText = document.lineAt(i).text;
@@ -87,7 +85,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
       }
 
       // If we hit the end of a previous island tag, stop searching
-      if (lineText.includes('%}') && i < position.line) {
+      if (lineText.includes("%}") && i < position.line) {
         break;
       }
     }
@@ -98,13 +96,18 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Provide completions for component names
    */
-  private async provideComponentNameCompletions(): Promise<vscode.CompletionItem[]> {
+  private async provideComponentNameCompletions(): Promise<
+    vscode.CompletionItem[]
+  > {
     try {
       const manifest = await this.kvClient.getComponentManifest();
 
-      return manifest.components.map(componentName => {
-        const item = new vscode.CompletionItem(componentName, vscode.CompletionItemKind.Class);
-        item.detail = 'Sellhubb Component';
+      return manifest.components.map((componentName) => {
+        const item = new vscode.CompletionItem(
+          componentName,
+          vscode.CompletionItemKind.Class
+        );
+        item.detail = "Sellhubb Component";
         item.insertText = componentName;
         item.sortText = `0_${componentName}`; // Sort alphabetically with priority
 
@@ -114,7 +117,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
         return item;
       });
     } catch (error) {
-      console.error('Failed to fetch component manifest:', error);
+      console.error("Failed to fetch component manifest:", error);
       return [];
     }
   }
@@ -122,7 +125,10 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Enrich completion item with metadata (async, non-blocking)
    */
-  private async enrichComponentItem(item: vscode.CompletionItem, componentName: string): Promise<void> {
+  private async enrichComponentItem(
+    item: vscode.CompletionItem,
+    componentName: string
+  ): Promise<void> {
     try {
       const metadata = await this.kvClient.getComponentMetadata(componentName);
       if (metadata.description) {
@@ -136,19 +142,25 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Provide completions for component props
    */
-  private async providePropsCompletions(componentName: string): Promise<vscode.CompletionItem[]> {
+  private async providePropsCompletions(
+    componentName: string
+  ): Promise<vscode.CompletionItem[]> {
     try {
-      const metadata: ComponentMetadata = await this.kvClient.getComponentMetadata(componentName);
+      const metadata: ComponentMetadata =
+        await this.kvClient.getComponentMetadata(componentName);
 
       if (!metadata.props || Object.keys(metadata.props).length === 0) {
         return [];
       }
 
       return Object.entries(metadata.props).map(([propName, propDef]) => {
-        const item = new vscode.CompletionItem(propName, vscode.CompletionItemKind.Property);
+        const item = new vscode.CompletionItem(
+          propName,
+          vscode.CompletionItemKind.Property
+        );
 
         // Build detail string
-        const requiredLabel = propDef.required ? 'required' : 'optional';
+        const requiredLabel = propDef.required ? "required" : "optional";
         item.detail = `${propDef.type} (${requiredLabel})`;
 
         // Build documentation
@@ -158,7 +170,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
           docs.appendMarkdown(propDef.description);
         }
         if (propDef.required) {
-          docs.appendMarkdown('\n\n_Required_');
+          docs.appendMarkdown("\n\n_Required_");
         }
         item.documentation = docs;
 
@@ -201,10 +213,12 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
         markdown.appendMarkdown(`${metadata.description}\n\n`);
 
         if (metadata.props && Object.keys(metadata.props).length > 0) {
-          markdown.appendMarkdown('**Props:**\n\n');
+          markdown.appendMarkdown("**Props:**\n\n");
           Object.entries(metadata.props).forEach(([name, def]) => {
-            const req = def.required ? '_(required)_' : '_(optional)_';
-            markdown.appendMarkdown(`- **${name}** \`${def.type}\` ${req}: ${def.description}\n`);
+            const req = def.required ? "_(required)_" : "_(optional)_";
+            markdown.appendMarkdown(
+              `- **${name}** \`${def.type}\` ${req}: ${def.description}\n`
+            );
           });
         }
 

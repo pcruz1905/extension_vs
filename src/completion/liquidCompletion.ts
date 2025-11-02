@@ -22,13 +22,15 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
 
     // Check if we're inside an island tag
     if (this.isIslandTagContext(textBeforeCursor)) {
-      return await this.provideComponentNameCompletions();
-    }
+      const componentName = this.getComponentNameInScope(document, position);
 
-    // Check if we're inside a props object
-    const componentName = this.getComponentNameInScope(document, position);
-    if (componentName && this.isPropsContext(textBeforeCursor)) {
-      return await this.providePropsCompletions(componentName);
+      // If we have a component name and are inside props
+      if (componentName && this.isPropsContext(textBeforeCursor)) {
+        return await this.providePropsCompletions(componentName);
+      }
+
+      // Otherwise, provide component name completions
+      return await this.provideComponentNameCompletions();
     }
 
     return undefined;

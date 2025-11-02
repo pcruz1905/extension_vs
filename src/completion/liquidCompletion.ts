@@ -2,6 +2,9 @@ import * as vscode from "vscode";
 import { KVClient } from "../kv/kvClient";
 import type { ComponentMetadata } from "../types";
 
+const ISLAND_PATTERN_REGEX =
+  /\{[{%]\s*island(?:\s+["']?([^"'%}\s]*)["']?)?(?:\s*,\s*props\s*:\s*(\{[\s\S]*?)?)?\s*(?:[}%]\}|$)?/;
+
 /**
  * Completion provider for Sellhubb Liquid components
  */
@@ -39,8 +42,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     // {{ island "
     // {% island 'some
     // {{ island   "foo
-    const islandPattern = /\{[{%]\s*island\s+["'][^"']*$/;
-    const match = textBeforeCursor.match(islandPattern);
+    const match = textBeforeCursor.match(ISLAND_PATTERN_REGEX);
 
     return !!match;
   }
@@ -79,7 +81,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
       const lineText = document.lineAt(i).text;
 
       // Match: {% island "component-name"
-      const match = lineText.match(/\{%\s*island\s+["']([^"']+)["']/);
+      const match = lineText.match(ISLAND_PATTERN_REGEX);
       if (match) {
         return match[1];
       }

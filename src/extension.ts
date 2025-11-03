@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { KVClient } from './kv/kvClient';
 import { LiquidCompletionProvider } from './completion/liquidCompletion';
+import { ContextCompletionProvider } from './completion/contextCompletion';
 
 let kvClient: KVClient;
 
@@ -11,14 +12,22 @@ export function activate(context: vscode.ExtensionContext) {
 	kvClient = new KVClient();
 	kvClient.updateConfig();
 
-	// Create completion provider
+	// Create completion providers
 	const completionProvider = new LiquidCompletionProvider(kvClient);
+	const contextProvider = new ContextCompletionProvider();
 
-	// Register completion provider for Liquid files
+	// Register island/component completion provider for Liquid files
 	const completionDisposable = vscode.languages.registerCompletionItemProvider(
 		{ language: 'liquid', scheme: 'file' },
 		completionProvider,
 		'"', "'", '{', ' ', ':', // Trigger characters
+	);
+
+	// Register context object completion provider (product., collection., shop.)
+	const contextDisposable = vscode.languages.registerCompletionItemProvider(
+		{ language: 'liquid', scheme: 'file' },
+		contextProvider,
+		'.' // Trigger on dot
 	);
 
 	// Register hover provider for component documentation
@@ -89,6 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Add all disposables to subscriptions
 	context.subscriptions.push(
 		completionDisposable,
+		contextDisposable,
 		hoverDisposable,
 		refreshCacheCommand,
 		syncComponentsCommand,

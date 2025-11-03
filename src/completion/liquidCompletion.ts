@@ -26,6 +26,14 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
 
       // If we have a component name and are inside props
       if (componentName && this.isPropsContext(textBeforeCursor)) {
+        const isInsideValue = /props:\s*{[^{}:,]*:[^,{}]*$/.test(
+          textBeforeCursor
+        );
+
+        if (isInsideValue) {
+          return [];
+        }
+
         return await this.providePropsCompletions(componentName);
       }
 

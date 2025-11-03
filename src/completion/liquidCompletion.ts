@@ -37,8 +37,15 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
         return await this.providePropsCompletions(componentName);
       }
 
-      // Otherwise, provide component name completions
-      return await this.provideComponentNameCompletions();
+      if (this.isHydrateValueContext(textBeforeCursor)) {
+        return this.provideHydrateValueCompletions();
+      }
+
+      // Otherwise, provide component name completions with island top level completion
+      return [
+        ...(await this.provideComponentNameCompletions()),
+        ...this.provideIslandTopLevelCompletions(),
+      ];
     }
 
     return undefined;
@@ -198,6 +205,46 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
       console.error(`Failed to fetch metadata for ${componentName}:`, error);
       return [];
     }
+  }
+
+  private isHydrateValueContext(text: string): boolean {
+    // Cursor is after hydrate: "
+    return /hydrate:\s*"[^"]*$/.test(text);
+  }
+
+  /**
+   * Provide island top level completions
+   */
+  private provideIslandTopLevelCompletions(): vscode.CompletionItem[] {
+    const items = [
+      new vscode.CompletionItem("props", vscode.CompletionItemKind.Property),
+      new vscode.CompletionItem("hydrate", vscode.CompletionItemKind.Property),
+    ];
+
+    items.forEach((i) => {
+      i.insertText = new vscode.SnippetString(`${i.label}: $1`);
+    });
+
+    return items;
+  }
+
+  /**
+   * Provide hydrate values for the island
+   */
+
+  private provideHydrateValueCompletions(): vscode.CompletionItem[] {
+    const values = ["load", "idle", "visible", "lazy"];
+    return values.map((v) => {
+      const item = new vscode.CompletionItem(
+        v,
+        vscode.CompletionItemKind.EnumMember
+      );
+      item.insertText = v;
+      item.documentation = new vscode.MarkdownString(
+        `Hydrate the island with **${v}** strategy.`
+      );
+      return item;
+    });
   }
 
   /**

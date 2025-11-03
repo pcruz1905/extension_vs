@@ -74,6 +74,11 @@ export class ContextCompletionProvider implements vscode.CompletionItemProvider 
       .lineAt(position)
       .text.substring(0, position.character);
 
+    // Check if we're in a for loop "in" clause: {% for var in ___
+    if (this.isForLoopInContext(linePrefix)) {
+      return this.provideForLoopIterableCompletions();
+    }
+
     // Check if we're accessing a context object property
     // Works in both {{ product. }} and inside island props: { productId: product. }
     const contextType = this.extractContextType(linePrefix);
@@ -116,15 +121,33 @@ export class ContextCompletionProvider implements vscode.CompletionItemProvider 
       if (varName === 'product' || varName === 'collection' || varName === 'shop') {
         return varName;
       }
+      // Check if it's "collections" (plural) - accessing a single collection item
+      if (varName === 'collections') {
+        return 'collection';
+      }
+      // Check if it's "products" (plural) - accessing a single product item
+      if (varName === 'products') {
+        return 'product';
+      }
       // Treat other variables as products (e.g., prod, item, p)
       return 'product';
     }
 
-    // Match loop variables that reference products in {{ }}
+    // Match loop variables that reference products/collections in {{ }}
     // Pattern: {{ variableName. where variableName could be anything
     const varMatch = linePrefix.match(/\{\{\s*(\w+)\./);
     if (varMatch) {
       const varName = varMatch[1];
+
+      // If it's "collections", treat as a single collection (loop context)
+      if (varName === 'collections') {
+        return 'collection';
+      }
+
+      // If it's "products", treat as a single product (loop context)
+      if (varName === 'products') {
+        return 'product';
+      }
 
       // Check if this is a loop variable
       // We'll treat unknown variables as potential product variables
@@ -164,5 +187,68 @@ export class ContextCompletionProvider implements vscode.CompletionItemProvider 
 
       return item;
     });
+  }
+
+  /**
+   * Check if we're in a for loop "in" context
+   * Pattern: {% for varName in ___
+   */
+  private isForLoopInContext(linePrefix: string): boolean {
+    // Match: {% for something in (with optional whitespace)
+    // But NOT if we're already typing a property access like "collection."
+    // Ensure we're after "in" but haven't closed the tag yet and not after a dot
+    const hasForIn = /\{%\s*for\s+\w+\s+in\s+/.test(linePrefix);
+    const hasPropertyAccess = /\{%\s*for\s+\w+\s+in\s+\w+\.\w*$/.test(linePrefix);
+    
+    return hasForIn && !hasPropertyAccess && /\{%\s*for\s+\w+\s+in\s+[^%]*$/.test(linePrefix);
+  }
+
+  /**
+   * Provide completions for iterables in for loops
+   * Suggests: collection, collection.products, products
+   */
+  private provideForLoopIterableCompletions(): vscode.CompletionItem[] {
+    const items: vscode.CompletionItem[] = [];
+
+    // collection (array of all collections)
+    const collectionItem = new vscode.CompletionItem(
+      "collection",
+      vscode.CompletionItemKind.Variable
+    );
+    collectionItem.detail = "array";
+    collectionItem.documentation = new vscode.MarkdownString(
+      "Array of all collections in the shop"
+    );
+    collectionItem.insertText = "collection";
+    collectionItem.sortText = "0_collection";
+    items.push(collectionItem);
+
+    // collection.products (products in current collection)
+    const collectionProductsItem = new vscode.CompletionItem(
+      "collection.products",
+      vscode.CompletionItemKind.Variable
+    );
+    collectionProductsItem.detail = "array";
+    collectionProductsItem.documentation = new vscode.MarkdownString(
+      "Array of products in the current collection"
+    );
+    collectionProductsItem.insertText = "collection.products";
+    collectionProductsItem.sortText = "0_collection.products";
+    items.push(collectionProductsItem);
+
+    // products (generic products array)
+    const productsItem = new vscode.CompletionItem(
+      "products",
+      vscode.CompletionItemKind.Variable
+    );
+    productsItem.detail = "array";
+    productsItem.documentation = new vscode.MarkdownString(
+      "Array of products (context-dependent)"
+    );
+    productsItem.insertText = "products";
+    productsItem.sortText = "1_products";
+    items.push(productsItem);
+
+    return items;
   }
 }

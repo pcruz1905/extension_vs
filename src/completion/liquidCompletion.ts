@@ -26,14 +26,6 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
 
       // If we have a component name and are inside props
       if (componentName && this.isPropsContext(textBeforeCursor)) {
-        const isInsideValue = /props:\s*{[^{}:,]*:[^,{}]*$/.test(
-          textBeforeCursor
-        );
-
-        if (isInsideValue) {
-          return [];
-        }
-
         return await this.providePropsCompletions(componentName);
       }
 
@@ -41,14 +33,15 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
         return this.provideHydrateValueCompletions();
       }
 
-      // Otherwise, provide component name completions with island top level completion
-      return [
-        ...(await this.provideComponentNameCompletions(document, position)),
-        ...this.provideIslandTopLevelCompletions(),
-      ];
+      if (this.isIslandValueContext(textBeforeCursor)) {
+        return this.provideComponentNameCompletions(document, position);
+      }
+
+      // Otherwise, provide island top level completion
+      return this.provideIslandTopLevelCompletions(document);
     }
 
-    return undefined;
+    return this.provideIslandSyntaxCompletion(textBeforeCursor);
   }
 
   /**
@@ -62,6 +55,28 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     const match = textBeforeCursor.match(ISLAND_PATTERN_REGEX);
 
     return !!match;
+  }
+
+  private provideIslandSyntaxCompletion(textBeforeCursor: string) {
+    const islandItem = new vscode.CompletionItem(
+      "island",
+      vscode.CompletionItemKind.Snippet
+    );
+
+    const INSIDE_LIQUID_REGEX = /\{[{%][^}%]*$/;
+    islandItem.detail = "Insert island snippet";
+
+    if (textBeforeCursor.match(INSIDE_LIQUID_REGEX)) {
+      islandItem.insertText = new vscode.SnippetString('island "$1"');
+    } else {
+      islandItem.insertText = new vscode.SnippetString('{{ island "$1" }}');
+    }
+
+    islandItem.command = {
+      command: "editor.action.triggerSuggest",
+      title: "Trigger suggestions",
+    };
+    return [islandItem];
   }
 
   /**
@@ -118,9 +133,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   private async provideComponentNameCompletions(
     document: vscode.TextDocument,
     position: vscode.Position
-  ): Promise<
-    vscode.CompletionItem[]
-  > {
+  ): Promise<vscode.CompletionItem[]> {
     try {
       const manifest = await this.kvClient.getComponentManifest();
 
@@ -134,10 +147,16 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
 
           // Fetch metadata to auto-fill required props
           try {
-            const metadata = await this.kvClient.getComponentMetadata(componentName);
+            const metadata = await this.kvClient.getComponentMetadata(
+              componentName
+            );
 
             // Generate snippet with auto-filled required props
-            const propsSnippet = this.generatePropsSnippet(metadata, document, position);
+            const propsSnippet = this.generatePropsSnippet(
+              metadata,
+              document,
+              position
+            );
             const hydrateTabstop = propsSnippet.tabstopCount + 1;
 
             item.insertText = new vscode.SnippetString(
@@ -185,7 +204,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     const propEntries = Object.entries(metadata.props || {});
 
     if (propEntries.length === 0) {
-      return { snippet: '$1', tabstopCount: 1 };
+      return { snippet: "$1", tabstopCount: 1 };
     }
 
     let tabstop = 1;
@@ -194,7 +213,12 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     // First, add all required props with smart defaults
     const requiredProps = propEntries.filter(([_, prop]) => prop.required);
     for (const [propName, prop] of requiredProps) {
-      const defaultValue = this.getSmartDefaultForProp(propName, prop, document, position);
+      const defaultValue = this.getSmartDefaultForProp(
+        propName,
+        prop,
+        document,
+        position
+      );
       propSnippets.push(`${propName}: \${${tabstop}:${defaultValue}}`);
       tabstop++;
     }
@@ -210,8 +234,8 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     }
 
     return {
-      snippet: propSnippets.join(', '),
-      tabstopCount: tabstop - 1
+      snippet: propSnippets.join(", "),
+      tabstopCount: tabstop - 1,
     };
   }
 
@@ -226,60 +250,60 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     position: vscode.Position
   ): string {
     // Smart defaults based on prop name patterns
-    if (propName.includes('Id')) {
+    if (propName.includes("Id")) {
       // productId, variantId, etc. -> product.id (or prod.id in loops)
-      const entityName = propName.replace(/Id$/, '').toLowerCase();
+      const entityName = propName.replace(/Id$/, "").toLowerCase();
 
       // Detect if we're in a loop and use the loop variable
-      const loopVar = this.detectLoopVariable(document, position, 'product');
+      const loopVar = this.detectLoopVariable(document, position, "product");
       const varName = loopVar || entityName;
 
       return `${varName}.id`;
     }
 
-    if (propName.includes('Title') || propName.includes('Name')) {
+    if (propName.includes("Title") || propName.includes("Name")) {
       // productTitle, productName -> product.title (or prod.title in loops)
-      const entityName = propName.replace(/(Title|Name)$/, '').toLowerCase();
+      const entityName = propName.replace(/(Title|Name)$/, "").toLowerCase();
 
       // Detect loop variable
-      const loopVar = this.detectLoopVariable(document, position, 'product');
+      const loopVar = this.detectLoopVariable(document, position, "product");
       const varName = loopVar || entityName;
 
       return `${varName}.title`;
     }
 
-    if (propName === 'amount' || propName === 'price') {
+    if (propName === "amount" || propName === "price") {
       // Will work with product.price or prod.price (user can edit)
-      const loopVar = this.detectLoopVariable(document, position, 'product');
-      return loopVar ? `${loopVar}.price` : 'product.price';
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.price` : "product.price";
     }
 
-    if (propName === 'compareAtPrice') {
-      const loopVar = this.detectLoopVariable(document, position, 'product');
-      return loopVar ? `${loopVar}.compareAtPrice` : 'product.compareAtPrice';
+    if (propName === "compareAtPrice") {
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.compareAtPrice` : "product.compareAtPrice";
     }
 
-    if (propName === 'currency') {
+    if (propName === "currency") {
       return '"USD"';
     }
 
-    if (propName === 'handle') {
-      const loopVar = this.detectLoopVariable(document, position, 'product');
-      return loopVar ? `${loopVar}.handle` : 'product.handle';
+    if (propName === "handle") {
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.handle` : "product.handle";
     }
 
-    if (propName === 'count') {
-      return '0';
+    if (propName === "count") {
+      return "0";
     }
 
     // Type-based defaults
     switch (prop.type) {
-      case 'string':
+      case "string":
         return '""';
-      case 'number':
-        return '0';
-      case 'boolean':
-        return 'false';
+      case "number":
+        return "0";
+      case "boolean":
+        return "false";
       default:
         return '""';
     }
@@ -293,7 +317,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   private detectLoopVariable(
     document: vscode.TextDocument,
     position: vscode.Position,
-    entityType: 'product' | 'collection' | 'shop'
+    entityType: "product" | "collection" | "shop"
   ): string | null {
     // Scan backwards up to 50 lines to find loop declarations
     for (let i = position.line; i >= Math.max(0, position.line - 50); i--) {
@@ -302,25 +326,31 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
       // Match: {% for varName in collection.products %}
       // Match: {% for varName in products %}
       // Match: {% for varName in all_products %}
-      const forLoopMatch = lineText.match(/\{%\s*for\s+(\w+)\s+in\s+(?:\w+\.)?(products|collections|items|all_products)/);
+      const forLoopMatch = lineText.match(
+        /\{%\s*for\s+(\w+)\s+in\s+(?:\w+\.)?(products|collections|items|all_products)/
+      );
       if (forLoopMatch) {
         const varName = forLoopMatch[1];
         const iterableType = forLoopMatch[2];
 
         // If iterating over products/items, assume the variable is a product
-        if (entityType === 'product' &&
-            (iterableType === 'products' || iterableType === 'items' || iterableType === 'all_products')) {
+        if (
+          entityType === "product" &&
+          (iterableType === "products" ||
+            iterableType === "items" ||
+            iterableType === "all_products")
+        ) {
           return varName;
         }
 
         // If iterating over collections, assume the variable is a collection
-        if (entityType === 'collection' && iterableType === 'collections') {
+        if (entityType === "collection" && iterableType === "collections") {
           return varName;
         }
       }
 
       // If we hit an endfor, we've exited the loop scope - stop searching
-      if (lineText.includes('{% endfor %}')) {
+      if (lineText.includes("{% endfor %}")) {
         break;
       }
     }
@@ -382,17 +412,38 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     return /hydrate:\s*"[^"]*$/.test(text);
   }
 
+  private isIslandValueContext(text: string): boolean {
+    // Cursor is inside island ""
+    return /island\s+"[^"]*$/.test(text);
+  }
+
   /**
    * Provide island top level completions
    */
-  private provideIslandTopLevelCompletions(): vscode.CompletionItem[] {
-    const items = [
+  private provideIslandTopLevelCompletions(
+    document: vscode.TextDocument
+  ): vscode.CompletionItem[] {
+    const text = document.getText();
+
+    const allItems = [
       new vscode.CompletionItem("props", vscode.CompletionItemKind.Property),
       new vscode.CompletionItem("hydrate", vscode.CompletionItemKind.Property),
     ];
 
+    // filtes out already used options
+    const items = allItems.filter((i) => !text.includes(`${i.label}:`));
+
     items.forEach((i) => {
-      i.insertText = new vscode.SnippetString(`${i.label}: $1`);
+      if (i.label === "props") {
+        i.insertText = new vscode.SnippetString(`${i.label}: {$1}`);
+      } else {
+        i.insertText = new vscode.SnippetString(`${i.label}: "$1"`);
+      }
+
+      i.command = {
+        command: "editor.action.triggerSuggest",
+        title: "Trigger suggestions",
+      };
     });
 
     return items;
@@ -406,7 +457,10 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     const values = [
       { value: "eager", description: "Hydrate immediately on page load" },
       { value: "lazy", description: "Hydrate when browser is idle (default)" },
-      { value: "idle", description: "Hydrate when element becomes visible in viewport" }
+      {
+        value: "idle",
+        description: "Hydrate when element becomes visible in viewport",
+      },
     ];
     return values.map(({ value, description }) => {
       const item = new vscode.CompletionItem(

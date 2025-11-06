@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { KVClient } from "../kv/kvClient";
 import type { ComponentMetadata, PropDefinition } from "../types";
+import type { R2Client } from "../r2/r2Client";
 
 const ISLAND_PATTERN_REGEX =
   /\{[{%]\s*island(?:\s+["']?([^"'%}\s]*)["']?)?(?:\s*,\s*props\s*:\s*(\{[\s\S]*?)?)?\s*(?:[}%]\}|$)?/;
@@ -9,7 +9,7 @@ const ISLAND_PATTERN_REGEX =
  * Completion provider for Sellhubb Liquid components
  */
 export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
-  constructor(private kvClient: KVClient) {}
+  constructor(private r2Client: R2Client) {}
 
   async provideCompletionItems(
     document: vscode.TextDocument,
@@ -135,7 +135,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     position: vscode.Position
   ): Promise<vscode.CompletionItem[]> {
     try {
-      const manifest = await this.kvClient.getComponentManifest();
+      const manifest = await this.r2Client.getComponentManifest();
 
       const items = await Promise.all(
         manifest.components.map(async (componentName) => {
@@ -147,7 +147,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
 
           // Fetch metadata to auto-fill required props
           try {
-            const metadata = await this.kvClient.getComponentMetadata(
+            const metadata = await this.r2Client.getComponentMetadata(
               componentName
             );
 
@@ -366,7 +366,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
   ): Promise<vscode.CompletionItem[]> {
     try {
       const metadata: ComponentMetadata =
-        await this.kvClient.getComponentMetadata(componentName);
+        await this.r2Client.getComponentMetadata(componentName);
 
       if (!metadata.props || Object.keys(metadata.props).length === 0) {
         return [];
@@ -492,7 +492,7 @@ export class LiquidCompletionProvider implements vscode.CompletionItemProvider {
     const islandMatch = lineText.match(/\{%\s*island\s+["']([^"']+)["']/);
     if (islandMatch && islandMatch[1] === word) {
       try {
-        const metadata = await this.kvClient.getComponentMetadata(word);
+        const metadata = await this.r2Client.getComponentMetadata(word);
         const markdown = new vscode.MarkdownString();
         markdown.appendMarkdown(`### ${metadata.name}\n\n`);
         markdown.appendMarkdown(`${metadata.description}\n\n`);

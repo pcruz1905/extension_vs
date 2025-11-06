@@ -3,7 +3,7 @@
  */
 
 /**
- * Component manifest structure from KV
+ * Component manifest structure from R2
  * Key: components:manifest
  */
 export interface ComponentManifest {
@@ -13,7 +13,7 @@ export interface ComponentManifest {
 }
 
 /**
- * Component metadata structure from KV
+ * Component metadata structure from R2
  * Key: component:<name>:metadata
  */
 export interface ComponentMetadata {
@@ -35,9 +35,10 @@ export interface PropDefinition {
  * Extension configuration from VS Code settings
  */
 export interface SellhubbConfig {
-  kvAccountId: string;
-  kvNamespaceId: string;
-  kvApiToken: string;
+  r2AccountId: string;
+  r2AccessKeyId: string;
+  r2SecretAccessKey: string;
+  r2BucketName: string;
 }
 
 /**

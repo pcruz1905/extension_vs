@@ -1,113 +1,159 @@
-import * as vscode from 'vscode';
-import { KVClient } from './kv/kvClient';
-import { LiquidCompletionProvider } from './completion/liquidCompletion';
-import { ContextCompletionProvider } from './completion/contextCompletion';
+import * as vscode from "vscode";
+import { LiquidCompletionProvider } from "./completion/liquidCompletion";
+import { ContextCompletionProvider } from "./completion/contextCompletion";
+import { R2Client } from "./r2/r2Client";
 
-let kvClient: KVClient;
+let r2Client: R2Client;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Sellhub Liquid IntelliSense extension is now active');
+  console.log("Sellhub Liquid IntelliSense extension is now active");
 
-	// Initialize KV client
-	kvClient = new KVClient();
-	kvClient.updateConfig();
+  const config = vscode.workspace.getConfiguration("sellhubb");
+  r2Client = new R2Client({
+    r2BucketName: config.get<string>("r2BucketName") || "",
+    r2AccountId: config.get<string>("r2AccountId") || "",
+    r2AccessKeyId: config.get<string>("r2AccessKeyId") || "",
+    r2SecretAccessKey: config.get<string>("r2SecretAccessKey") || "",
+  });
 
-	// Create completion providers
-	const completionProvider = new LiquidCompletionProvider(kvClient);
-	const contextProvider = new ContextCompletionProvider();
+  // Create completion providers
+  const completionProvider = new LiquidCompletionProvider(r2Client);
+  const contextProvider = new ContextCompletionProvider();
 
-	// Register island/component completion provider for Liquid files
-	const completionDisposable = vscode.languages.registerCompletionItemProvider(
-		{ language: 'liquid', scheme: 'file' },
-		completionProvider,
-		'"', "'", '{', ' ', ':', // Trigger characters
-	);
+  // Register island/component completion provider for Liquid files
+  const completionDisposable = vscode.languages.registerCompletionItemProvider(
+    { language: "liquid", scheme: "file" },
+    completionProvider,
+    '"',
+    "'",
+    "{",
+    " ",
+    ":" // Trigger characters
+  );
 
-	// Register context object completion provider (product., collection., shop.)
-	const contextDisposable = vscode.languages.registerCompletionItemProvider(
-		{ language: 'liquid', scheme: 'file' },
-		contextProvider,
-		'.' // Trigger on dot
-	);
+  // Register context object completion provider (product., collection., shop.)
+  const contextDisposable = vscode.languages.registerCompletionItemProvider(
+    { language: "liquid", scheme: "file" },
+    contextProvider,
+    "." // Trigger on dot
+  );
 
-	// Register hover provider for component documentation
-	const hoverDisposable = vscode.languages.registerHoverProvider(
-		{ language: 'liquid', scheme: 'file' },
-		{
-			provideHover: (document, position) => completionProvider.provideHover(document, position)
-		}
-	);
+  // Register hover provider for component documentation
+  const hoverDisposable = vscode.languages.registerHoverProvider(
+    { language: "liquid", scheme: "file" },
+    {
+      provideHover: (document, position) =>
+        completionProvider.provideHover(document, position),
+    }
+  );
 
-	// Command: Refresh component cache
-	const refreshCacheCommand = vscode.commands.registerCommand('sellhubb.refreshCache', () => {
-		kvClient.clearCache();
-	});
+  // Command: Refresh component cache
+  const refreshCacheCommand = vscode.commands.registerCommand(
+    "sellhubb.refreshCache",
+    () => {
+      r2Client.clearCache();
+    }
+  );
 
-	// Command: Sync components from KV
-	const syncComponentsCommand = vscode.commands.registerCommand('sellhubb.syncComponents', async () => {
-		try {
-			vscode.window.showInformationMessage('Syncing components from Cloudflare KV...');
-			const manifest = await kvClient.getComponentManifest();
-			vscode.window.showInformationMessage(`Synced ${manifest.components.length} components successfully`);
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			vscode.window.showErrorMessage(`Failed to sync components: ${errorMessage}`);
-		}
-	});
+  // Command: Sync components from R2
+  const syncComponentsCommand = vscode.commands.registerCommand(
+    "sellhubb.syncComponents",
+    async () => {
+      try {
+        vscode.window.showInformationMessage(
+          "Syncing components from Cloudflare R2..."
+        );
+        const manifest = await r2Client.getComponentManifest();
+        vscode.window.showInformationMessage(
+          `Synced ${manifest.components.length} components successfully`
+        );
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(
+          `Failed to sync components: ${errorMessage}`
+        );
+      }
+    }
+  );
 
-	// Command: Show cache stats (for debugging)
-	const cacheStatsCommand = vscode.commands.registerCommand('sellhubb.showCacheStats', () => {
-		const stats = kvClient.getCacheStats();
-		vscode.window.showInformationMessage(
-			`Cache stats - Manifest: ${stats.manifestCached ? 'cached' : 'not cached'}, Metadata entries: ${stats.metadataCacheSize}`
-		);
-	});
+  // Command: Show cache stats (for debugging)
+  const cacheStatsCommand = vscode.commands.registerCommand(
+    "sellhubb.showCacheStats",
+    () => {
+      const stats = r2Client.getCacheStats();
+      vscode.window.showInformationMessage(
+        `Cache stats - Manifest: ${
+          stats.manifestCached ? "cached" : "not cached"
+        }, Metadata entries: ${stats.metadataCacheSize}`
+      );
+    }
+  );
 
-	// Command: Test KV connection
-	const testConnectionCommand = vscode.commands.registerCommand('sellhubb.testConnection', async () => {
-		const config = vscode.workspace.getConfiguration('sellhubb');
-		const accountId = config.get<string>('kvAccountId');
-		const namespaceId = config.get<string>('kvNamespaceId');
-		const apiToken = config.get<string>('kvApiToken');
+  // Command: Test R2 connection
+  const testConnectionCommand = vscode.commands.registerCommand(
+    "sellhubb.testConnection",
+    async () => {
+      const config = vscode.workspace.getConfiguration("sellhubb");
 
-		if (!accountId || !namespaceId || !apiToken) {
-			vscode.window.showErrorMessage('Missing KV credentials. Please configure all settings.');
-			return;
-		}
+      const r2BucketName = config.get<string>("r2BucketName");
+      const r2AccountId = config.get<string>("r2AccountId");
+      const r2AccessKeyId = config.get<string>("r2AccessKeyId");
+      const r2SecretAccessKey = config.get<string>("r2SecretAccessKey");
 
-		vscode.window.showInformationMessage(`Testing KV connection...\nAccount: ${accountId.substring(0, 8)}...\nNamespace: ${namespaceId.substring(0, 8)}...`);
+      if (
+        !r2BucketName ||
+        !r2AccountId ||
+        !r2AccessKeyId ||
+        !r2SecretAccessKey
+      ) {
+        vscode.window.showErrorMessage(
+          "Missing R2 credentials. Please configure all settings."
+        );
+        return;
+      }
 
-		try {
-			await kvClient.getComponentManifest();
-			vscode.window.showInformationMessage('✓ KV connection successful!');
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			vscode.window.showErrorMessage(`✗ KV connection failed: ${errorMessage}`);
-		}
-	});
+      vscode.window.showInformationMessage(
+        `Testing R2 connection...\nAccount: ${r2AccountId.substring(0, 8)}`
+      );
 
-	// Listen for configuration changes
-	const configChangeDisposable = vscode.workspace.onDidChangeConfiguration(event => {
-		if (event.affectsConfiguration('sellhubb')) {
-			console.log('Sellhubb configuration changed, updating KV client...');
-			kvClient.updateConfig();
-			kvClient.clearCache(); // Clear cache when config changes
-		}
-	});
+      try {
+        await r2Client.getComponentManifest();
+        vscode.window.showInformationMessage("✓ R2 connection successful!");
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(
+          `✗ R2 connection failed: ${errorMessage}`
+        );
+      }
+    }
+  );
 
-	// Add all disposables to subscriptions
-	context.subscriptions.push(
-		completionDisposable,
-		contextDisposable,
-		hoverDisposable,
-		refreshCacheCommand,
-		syncComponentsCommand,
-		cacheStatsCommand,
-		testConnectionCommand,
-		configChangeDisposable
-	);
+  // Listen for configuration changes
+  const configChangeDisposable = vscode.workspace.onDidChangeConfiguration(
+    (event) => {
+      if (event.affectsConfiguration("sellhubb")) {
+        console.log("Sellhubb configuration changed, updating R2 client...");
+        r2Client.updateConfig();
+        r2Client.clearCache(); // Clear cache when config changes
+      }
+    }
+  );
+
+  // Add all disposables to subscriptions
+  context.subscriptions.push(
+    completionDisposable,
+    contextDisposable,
+    hoverDisposable,
+    refreshCacheCommand,
+    syncComponentsCommand,
+    cacheStatsCommand,
+    testConnectionCommand,
+    configChangeDisposable
+  );
 }
 
 export function deactivate() {
-	// Cleanup if needed
+  // Cleanup if needed
 }

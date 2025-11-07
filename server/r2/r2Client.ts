@@ -1,11 +1,10 @@
-import * as vscode from "vscode";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import type {
   CacheEntry,
   ComponentManifest,
   ComponentMetadata,
   SellhubbConfig,
-} from "../types";
+} from "../../shared/types";
 
 /**
  * Cache duration in milliseconds (5 minutes)
@@ -33,22 +32,6 @@ export class R2Client {
         secretAccessKey: c.r2SecretAccessKey,
       },
     });
-  }
-
-  /**
-   * Initialize or update configuration from VS Code settings
-   */
-  public updateConfig(): void {
-    const config = vscode.workspace.getConfiguration("sellhubb");
-
-    this.config = {
-      r2BucketName: config.get<string>("r2BucketName") || "",
-      r2AccountId: config.get<string>("r2AccountId") || "",
-      r2AccessKeyId: config.get<string>("r2AccessKeyId") || "",
-      r2SecretAccessKey: config.get<string>("r2SecretAccessKey") || "",
-    };
-
-    this.validateConfig();
   }
 
   /**
@@ -128,10 +111,8 @@ export class R2Client {
       return manifest;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(
-        `Failed to fetch component manifest from R2: ${message}`
-      );
-      throw error;
+
+      throw new Error(`Failed to fetch component manifest from R2: ${message}`);
     }
   }
 
@@ -161,13 +142,12 @@ export class R2Client {
 
       return metadata;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      vscode.window.showErrorMessage(
-        `Failed to fetch metadata for ${componentName}: ${errorMessage}`
-      );
       throw error;
     }
+  }
+
+  public async testConnection() {
+    await this.getComponentManifest();
   }
 
   /**
@@ -176,7 +156,6 @@ export class R2Client {
   public clearCache(): void {
     this.manifestCache = null;
     this.metadataCache.clear();
-    vscode.window.showInformationMessage("Sellhubb component cache cleared");
   }
 
   /**

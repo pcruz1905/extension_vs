@@ -2,9 +2,9 @@ import { WebSocketServer, WebSocket } from "ws";
 import { spawn } from "child_process";
 import { join } from "path";
 
-const wss = new WebSocketServer({ port: 3000 });
+const wss = new WebSocketServer({ port: 3001 });
 
-console.log("🚀 LSP WebSocket Bridge starting on port 3000...");
+console.log("🚀 LSP WebSocket Bridge starting on port 3001...");
 
 wss.on("connection", (ws: WebSocket) => {
   console.log("🔌 LSP WebSocket client connected");
@@ -66,7 +66,7 @@ wss.on("connection", (ws: WebSocket) => {
 });
 
 wss.on("listening", () => {
-  console.log("✅ LSP WebSocket Bridge is running on ws://localhost:3000");
+  console.log("✅ LSP WebSocket Bridge is running on ws://localhost:3001");
   console.log("💡 Start your frontend and connect to this WebSocket");
 });
 

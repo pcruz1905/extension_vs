@@ -82,6 +82,31 @@
           "command": "sellhubb.openSettings"
         }
       ]
+    },
+    "configuration": {
+      "title": "Sellhubb",
+      "properties": {
+        "sellhubb.r2AccountId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare account ID for accessing R2"
+        },
+        "sellhubb.r2AccessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 API Access Key with R2 access"
+        },
+        "sellhubb.r2SecretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 API Secret Key with R2 access"
+        },
+        "sellhubb.r2BucketName": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Bucket name where components stored"
+        }
+      }
     }
   },
   "scripts": {

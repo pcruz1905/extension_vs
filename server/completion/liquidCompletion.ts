@@ -6,8 +6,10 @@ import {
   InsertTextFormat,
   MarkupKind,
   Hover,
+  InsertTextMode,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import { ComponentMetadata, PropDefinition } from "../../shared/types";
 
 const ISLAND_PATTERN_REGEX =
   /\{[{%]\s*island(?:\s+["']?([^"'%}\s]*)["']?)?(?:\s*,\s*props\s*:\s*(\{[\s\S]*?)?)?\s*(?:[}%]\}|$)?/;
@@ -146,13 +148,10 @@ export class LiquidCompletionProvider {
       });
       const textBeforeCursor = lineText.substring(0, position.character);
 
-      // More accurate quote detection
-      const hasOpeningQuote = textBeforeCursor.includes('"');
-      const lastQuoteIndex = textBeforeCursor.lastIndexOf('"');
-      const textAfterLastQuote = textBeforeCursor.substring(lastQuoteIndex + 1);
-      const hasClosingQuote = textAfterLastQuote.includes('"');
-
-      const isInsideQuotes = hasOpeningQuote && !hasClosingQuote;
+      // Check what the user has already typed
+      const islandMatch = textBeforeCursor.match(/island\s*("?)([^"']*)$/);
+      const hasOpeningQuote = islandMatch && islandMatch[1] === '"';
+      const typedText = islandMatch ? islandMatch[2] : "";
 
       const items = await Promise.all(
         manifest.components.map(async (componentName: string) => {
@@ -168,61 +167,32 @@ export class LiquidCompletionProvider {
             const metadata = await this.r2Client.getComponentMetadata(
               componentName
             );
-            const requiredProps = metadata.props
-              ? Object.entries(metadata.props)
-                  .filter(([_, def]: [string, any]) => def.required)
-                  .map(([name]) => name)
-              : [];
 
-            // Build snippet parts
-            const snippetParts: string[] = [];
+            // Generate snippet with auto-filled required props
+            const propsSnippet = this.generatePropsSnippet(
+              metadata,
+              document,
+              position
+            );
+            const hydrateTabstop = propsSnippet.tabstopCount + 1;
 
-            // Component name (handle quotes correctly)
-            if (isInsideQuotes) {
-              snippetParts.push(componentName);
+            let insertText = "";
+            if (hasOpeningQuote) {
+              // User already typed: island "add-
+              // We need to complete: add-to-cart", props: { ... }
+              insertText = `${componentName.replace(
+                typedText,
+                ""
+              )}", props: { ${
+                propsSnippet.snippet
+              } }, hydrate: "\${${hydrateTabstop}|eager,lazy,idle|}`;
             } else {
-              snippetParts.push(`"${componentName}"`);
+              // User typed: island add-
+              // We need to complete: "add-to-cart", props: { ... }
+              insertText = `"${componentName}", props: { ${propsSnippet.snippet} }, hydrate: "\${${hydrateTabstop}|eager,lazy,idle|}`;
             }
-
-            // Props (no placeholders)
-            if (requiredProps.length > 0) {
-              const propsSnippet = requiredProps
-                .map((p) => `${p}: `)
-                .join(", ");
-              snippetParts.push(`props: { ${propsSnippet} }`);
-            } else if (
-              metadata.props &&
-              Object.keys(metadata.props).length > 0
-            ) {
-              snippetParts.push(`props: { }`);
-            }
-
-            // Hydrate
-            snippetParts.push(`hydrate: "\${1|eager,lazy,idle|}"`);
-
-            const snippet = snippetParts.join(", ");
-
-            item.insertText = snippet;
+            item.insertText = insertText;
             item.insertTextFormat = InsertTextFormat.Snippet;
-
-            // ✅ FIXED: Properly replace what's inside the quotes
-            if (isInsideQuotes) {
-              const startIndex = lastQuoteIndex + 1;
-              const textAfterQuote = lineText.substring(startIndex);
-              const nextQuoteIndex = textAfterQuote.indexOf('"');
-              const endIndex =
-                nextQuoteIndex !== -1
-                  ? startIndex + nextQuoteIndex
-                  : position.character;
-
-              item.textEdit = {
-                range: {
-                  start: { line: position.line, character: startIndex },
-                  end: { line: position.line, character: endIndex },
-                },
-                newText: snippet,
-              };
-            }
 
             if (metadata.description) {
               item.documentation = {
@@ -231,9 +201,7 @@ export class LiquidCompletionProvider {
               };
             }
           } catch (error) {
-            const fallbackSnippet = isInsideQuotes
-              ? `${componentName}, props: { }, hydrate: "\${1|eager,lazy,idle|}"`
-              : `"${componentName}", props: { }, hydrate: "\${1|eager,lazy,idle|}"`;
+            const fallbackSnippet = `"${componentName}", props: { }, hydrate: "\${1|eager,lazy,idle|}"`;
 
             item.insertText = fallbackSnippet;
             item.insertTextFormat = InsertTextFormat.Snippet;
@@ -248,6 +216,173 @@ export class LiquidCompletionProvider {
       console.error("Failed to fetch component manifest:", error);
       return [];
     }
+  }
+
+  private generatePropsSnippet(
+    metadata: ComponentMetadata,
+    document: TextDocument,
+    position: Position
+  ): { snippet: string; tabstopCount: number } {
+    const propEntries = Object.entries(metadata.props || {});
+    if (propEntries.length === 0) {
+      return {
+        snippet: "$1",
+        tabstopCount: 1,
+      };
+    }
+
+    let tabstop = 1;
+    const propSnippets: string[] = [];
+
+    // First, add all required props with smart defaults
+    const requiredProps = propEntries.filter(([_, prop]) => prop.required);
+    for (const [propName, prop] of requiredProps) {
+      const defaultValue = this.getSmartDefaultForProp(
+        propName,
+        prop,
+        document,
+        position
+      );
+      propSnippets.push(`${propName}: \${${tabstop}:${defaultValue}}`);
+      tabstop++;
+    }
+
+    // Add placeholder for optional props
+    if (propSnippets.length === 0) {
+      propSnippets.push(`$${tabstop}`);
+      tabstop++;
+    } else {
+      // Add empty tabstop at the end for adding more props
+      propSnippets.push(`$${tabstop}`);
+      tabstop++;
+    }
+
+    return {
+      snippet: propSnippets.join(", "),
+      tabstopCount: tabstop - 1,
+    };
+  }
+
+  /**
+   * Get smart default value for a prop based on its name and type
+   * Detects loop variables and uses them instead of hardcoded entity names
+   */
+  private getSmartDefaultForProp(
+    propName: string,
+    prop: PropDefinition,
+    document: TextDocument,
+    position: Position
+  ): string {
+    // Smart defaults based on prop name patterns
+    if (propName.includes("Id")) {
+      // productId, variantId, etc. -> product.id (or prod.id in loops)
+      const entityName = propName.replace(/Id$/, "").toLowerCase();
+
+      // Detect if we're in a loop and use the loop variable
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      const varName = loopVar || entityName;
+
+      return `${varName}.id`;
+    }
+
+    if (propName.includes("Title") || propName.includes("Name")) {
+      // productTitle, productName -> product.title (or prod.title in loops)
+      const entityName = propName.replace(/(Title|Name)$/, "").toLowerCase();
+
+      // Detect loop variable
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      const varName = loopVar || entityName;
+
+      return `${varName}.title`;
+    }
+
+    if (propName === "amount" || propName === "price") {
+      // Will work with product.price or prod.price (user can edit)
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.price` : "product.price";
+    }
+
+    if (propName === "compareAtPrice") {
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.compareAtPrice` : "product.compareAtPrice";
+    }
+
+    if (propName === "currency") {
+      return '"USD"';
+    }
+
+    if (propName === "handle") {
+      const loopVar = this.detectLoopVariable(document, position, "product");
+      return loopVar ? `${loopVar}.handle` : "product.handle";
+    }
+
+    if (propName === "count") {
+      return "0";
+    }
+
+    // Type-based defaults
+    switch (prop.type) {
+      case "string":
+        return '""';
+      case "number":
+        return "0";
+      case "boolean":
+        return "false";
+      default:
+        return '""';
+    }
+  }
+
+  /**
+   * Detect loop variable name for a given entity type by scanning backwards
+   * Returns the variable name if found, otherwise returns null
+   * Example: {% for prod in collection.products %} -> returns 'prod'
+   */
+  private detectLoopVariable(
+    document: TextDocument,
+    position: Position,
+    entityType: "product" | "collection" | "shop"
+  ): string | null {
+    // Scan backwards up to 50 lines to find loop declarations
+    for (let i = position.line; i >= Math.max(0, position.line - 50); i--) {
+      const lineText = document.getText({
+        start: { line: position.line, character: 0 },
+        end: { line: position.line, character: Number.MAX_VALUE },
+      });
+
+      // Match: {% for varName in collection.products %}
+      // Match: {% for varName in products %}
+      // Match: {% for varName in all_products %}
+      const forLoopMatch = lineText.match(
+        /\{%\s*for\s+(\w+)\s+in\s+(?:\w+\.)?(products|collections|items|all_products)/
+      );
+      if (forLoopMatch) {
+        const varName = forLoopMatch[1];
+        const iterableType = forLoopMatch[2];
+
+        // If iterating over products/items, assume the variable is a product
+        if (
+          entityType === "product" &&
+          (iterableType === "products" ||
+            iterableType === "items" ||
+            iterableType === "all_products")
+        ) {
+          return varName;
+        }
+
+        // If iterating over collections, assume the variable is a collection
+        if (entityType === "collection" && iterableType === "collections") {
+          return varName;
+        }
+      }
+
+      // If we hit an endfor, we've exited the loop scope - stop searching
+      if (lineText.includes("{% endfor %}")) {
+        break;
+      }
+    }
+
+    return null;
   }
 
   private generateComponentDocumentation(metadata: any): string {

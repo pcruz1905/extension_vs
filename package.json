@@ -89,12 +89,15 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "npm run compile && npm run lint && vsce package",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint src --ext ts",
+    "start:lsp": "node dist/server/websocket-bridge.js",
+    "dev:lsp": "npm run compile && node dist/server/websocket-bridge.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/vscode": "^1.105.0",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "@vscode/test-cli": "^0.0.11",

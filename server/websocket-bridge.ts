@@ -15,7 +15,7 @@ wss.on("connection", (ws: WebSocket) => {
   console.log(`📁 Starting LSP server: ${serverPath}`);
 
   // Spawn your existing language server as a child process
-  const serverProcess = spawn("node", [serverPath], {
+  const serverProcess = spawn("node", [serverPath, "--stdio"], {
     stdio: ["pipe", "pipe", "pipe"],
   });
 

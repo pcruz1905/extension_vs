@@ -6,6 +6,7 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node";
+import { PreviewManager } from "./preview/PreviewManager";
 
 let client: LanguageClient;
 
@@ -102,6 +103,8 @@ function setupNotificationHandlers() {
 }
 
 function registerCommands(context: vscode.ExtensionContext) {
+  const previewManager = new PreviewManager(context);
+
   const commands = [
     vscode.commands.registerCommand("sellhubb.refreshCache", async () => {
       await executeServerCommand(
@@ -154,6 +157,16 @@ function registerCommands(context: vscode.ExtensionContext) {
         "Failed to open settings"
       );
     }),
+
+    vscode.commands.registerCommand("sellhubb.openPreview", () =>
+      previewManager.openPreview()
+    ),
+    vscode.commands.registerCommand("sellhubb.openPreviewToSide", () =>
+      previewManager.openPreview(true)
+    ),
+    vscode.commands.registerCommand("sellhubb.refreshPreview", () =>
+      previewManager.refresh()
+    ),
   ];
 
   // Add all commands to subscriptions

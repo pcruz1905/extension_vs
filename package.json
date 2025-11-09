@@ -51,6 +51,21 @@
         "command": "sellhubb.openSettings",
         "title": "Sellhubb: Open Settings",
         "category": "Sellhubb Liquid"
+      },
+      {
+        "command": "sellhubb.openPreview",
+        "title": "Sellhubb: Open Preview",
+        "category": "Sellhubb Liquid"
+      },
+      {
+        "command": "sellhubb.openPreviewToSide",
+        "title": "Sellhubb: Open Preview to Side",
+        "category": "Sellhubb Liquid"
+      },
+      {
+        "command": "sellhubb.refreshPreview",
+        "title": "Sellhubb: Refresh Preview",
+        "category": "Sellhubb Liquid"
       }
     ],
     "menus": {

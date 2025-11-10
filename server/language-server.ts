@@ -22,12 +22,19 @@ let documents = new TextDocuments(TextDocument);
 let r2Client: R2Client | null = null;
 let hasConfigurationCapability = false;
 let completionProvider: LiquidCompletionProvider | null = null;
+let initializationR2Config: any = null;
 
 connection.onInitialize((params) => {
   const capabilities = params.capabilities;
   hasConfigurationCapability = !!(
     capabilities.workspace && !!capabilities.workspace.configuration
   );
+
+  // Store R2 config from initialization options (frontend/browser context)
+  if (params.initializationOptions) {
+    initializationR2Config = params.initializationOptions;
+    connection.console.log("Received R2 config from initialization options");
+  }
 
   const result: InitializeResult = {
     capabilities: {
@@ -74,25 +81,31 @@ async function initializeR2Client() {
       r2SecretAccessKey: string;
     };
 
-    // Try to get config from workspace settings (VS Code)
-    try {
-      const config = await connection.workspace.getConfiguration("sellhubb");
+    // Priority 1: Use initialization options from frontend (browser context)
+    if (initializationR2Config) {
       r2Config = {
-        r2BucketName: (config.r2BucketName as string) || "",
-        r2AccountId: (config.r2AccountId as string) || "",
-        r2AccessKeyId: (config.r2AccessKeyId as string) || "",
-        r2SecretAccessKey: (config.r2SecretAccessKey as string) || "",
+        r2BucketName: initializationR2Config.R2_BUCKET_NAME || "",
+        r2AccountId: initializationR2Config.R2_ACCOUNT_ID || "",
+        r2AccessKeyId: initializationR2Config.R2_ACCESS_KEY_ID || "",
+        r2SecretAccessKey: initializationR2Config.R2_SECRET_ACCESS_KEY || "",
       };
-      connection.console.log("Using workspace configuration for R2");
-    } catch (workspaceError) {
-      // Fallback to environment variables (browser/WebSocket context)
-      r2Config = {
-        r2BucketName: process.env.R2_BUCKET_NAME || "",
-        r2AccountId: process.env.R2_ACCOUNT_ID || "",
-        r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-        r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
-      };
-      connection.console.log("Using environment variables for R2");
+      connection.console.log("Using initialization options for R2 (from frontend)");
+    } 
+    // Priority 2: Try workspace settings (VS Code extension context)
+    else {
+      try {
+        const config = await connection.workspace.getConfiguration("sellhubb");
+        r2Config = {
+          r2BucketName: (config.r2BucketName as string) || "",
+          r2AccountId: (config.r2AccountId as string) || "",
+          r2AccessKeyId: (config.r2AccessKeyId as string) || "",
+          r2SecretAccessKey: (config.r2SecretAccessKey as string) || "",
+        };
+        connection.console.log("Using workspace configuration for R2 (VS Code extension)");
+      } catch (workspaceError) {
+        // No config available
+        throw new Error("No R2 configuration provided");
+      }
     }
 
     r2Client = new R2Client(r2Config);

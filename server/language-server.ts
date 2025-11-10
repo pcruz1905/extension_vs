@@ -67,15 +67,35 @@ connection.onDidChangeConfiguration(async () => {
 
 async function initializeR2Client() {
   try {
-    const config = await connection.workspace.getConfiguration("sellhubb");
+    let r2Config: {
+      r2BucketName: string;
+      r2AccountId: string;
+      r2AccessKeyId: string;
+      r2SecretAccessKey: string;
+    };
 
-    r2Client = new R2Client({
-      r2BucketName: (config.r2BucketName as string) || "",
-      r2AccountId: (config.r2AccountId as string) || "",
-      r2AccessKeyId: (config.r2AccessKeyId as string) || "",
-      r2SecretAccessKey: (config.r2SecretAccessKey as string) || "",
-    });
+    // Try to get config from workspace settings (VS Code)
+    try {
+      const config = await connection.workspace.getConfiguration("sellhubb");
+      r2Config = {
+        r2BucketName: (config.r2BucketName as string) || "",
+        r2AccountId: (config.r2AccountId as string) || "",
+        r2AccessKeyId: (config.r2AccessKeyId as string) || "",
+        r2SecretAccessKey: (config.r2SecretAccessKey as string) || "",
+      };
+      connection.console.log("Using workspace configuration for R2");
+    } catch (workspaceError) {
+      // Fallback to environment variables (browser/WebSocket context)
+      r2Config = {
+        r2BucketName: process.env.R2_BUCKET_NAME || "",
+        r2AccountId: process.env.R2_ACCOUNT_ID || "",
+        r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || "",
+        r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+      };
+      connection.console.log("Using environment variables for R2");
+    }
 
+    r2Client = new R2Client(r2Config);
     completionProvider = new LiquidCompletionProvider(r2Client);
 
     connection.console.log("R2 client initialized successfully");

@@ -1,6 +1,10 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { spawn } from "child_process";
 import { join } from "path";
+import { config } from "dotenv";
+
+// Load environment variables from .env file
+config({ path: join(__dirname, "..", ".env") });
 
 const wss = new WebSocketServer({ port: 3001 });
 

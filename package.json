@@ -1,163 +1,30 @@
 {
-  "name": "extension_vs",
-  "displayName": "Sellhubb Liquid IntelliSense",
-  "description": "IntelliSense for Sellhubb Liquid templates with island components",
-  "version": "0.0.1",
-  "publisher": "sellhubb",
-  "engines": {
-    "vscode": "^1.105.0"
-  },
-  "categories": [
-    "Programming Languages",
-    "Snippets"
-  ],
-  "activationEvents": [
-    "onLanguage:liquid"
-  ],
-  "main": "./dist/src/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "sellhubb.refreshCache",
-        "title": "Sellhubb: Refresh Component Cache",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.syncComponents",
-        "title": "Sellhubb: Sync Components from R2",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.showCacheStats",
-        "title": "Sellhubb: Show Cache Stats",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.testConnection",
-        "title": "Sellhubb: Test R2 Connection",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.validateConfiguration",
-        "title": "Sellhubb: Validate Configuration",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.getComponentList",
-        "title": "Sellhubb: Get Component List",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.openSettings",
-        "title": "Sellhubb: Open Settings",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.openPreview",
-        "title": "Sellhubb: Open Preview",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.openPreviewToSide",
-        "title": "Sellhubb: Open Preview to Side",
-        "category": "Sellhubb Liquid"
-      },
-      {
-        "command": "sellhubb.refreshPreview",
-        "title": "Sellhubb: Refresh Preview",
-        "category": "Sellhubb Liquid"
-      }
-    ],
-    "menus": {
-      "command-palette": [
-        {
-          "command": "sellhubb.refreshCache",
-          "when": "editorLangId == liquid"
-        },
-        {
-          "command": "sellhubb.syncComponents",
-          "when": "editorLangId == liquid"
-        },
-        {
-          "command": "sellhubb.showCacheStats",
-          "when": "editorLangId == liquid"
-        },
-        {
-          "command": "sellhubb.testConnection",
-          "when": "editorLangId == liquid"
-        },
-        {
-          "command": "sellhubb.validateConfiguration"
-        },
-        {
-          "command": "sellhubb.getComponentList",
-          "when": "editorLangId == liquid"
-        },
-        {
-          "command": "sellhubb.openSettings"
-        }
-      ]
+    "name": "liquid-sellhub-workspace",
+    "description": "Base workspace package",
+    "version": "0.0.1",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "clean": "npm run clean --workspaces",
+        "watch": "tsc -b tsconfig.build.json --watch",
+        "build": "tsc -b tsconfig.build.json && npm run build --workspaces",
+        "build:clean": "npm run clean && npm run build",
+        "langium:generate": "npm run --workspace packages/language langium:generate",
+        "langium:watch": "npm run --workspace packages/language langium:watch",
+        "test": "npm run --workspace packages/language test"
     },
-    "configuration": {
-      "title": "Sellhubb",
-      "properties": {
-        "sellhubb.r2AccountId": {
-          "type": "string",
-          "default": "",
-          "description": "Cloudflare account ID for accessing R2"
-        },
-        "sellhubb.r2AccessKeyId": {
-          "type": "string",
-          "default": "",
-          "description": "Cloudflare R2 API Access Key with R2 access"
-        },
-        "sellhubb.r2SecretAccessKey": {
-          "type": "string",
-          "default": "",
-          "description": "Cloudflare R2 API Secret Key with R2 access"
-        },
-        "sellhubb.r2BucketName": {
-          "type": "string",
-          "default": "",
-          "description": "Cloudflare R2 Bucket name where components stored"
-        }
-      }
-    }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "npm run compile && npm run lint && vsce package",
-    "lint": "eslint src --ext ts",
-    "start:lsp": "node dist/server/websocket-bridge.js",
-    "dev:lsp": "npm run compile && node dist/server/websocket-bridge.js"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.105.0",
-    "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.36.0",
-    "npm-run-all": "^4.1.5",
-    "ts-loader": "^9.5.4",
-    "typescript": "^5.9.3",
-    "webpack": "^5.102.0",
-    "webpack-cli": "^6.0.1"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.925.0",
-    "dotenv": "^16.4.5",
-    "esbuild": "^0.25.12",
-    "monaco-languageclient": "^10.2.0",
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-ws-jsonrpc": "^3.5.0",
-    "ws": "^8.18.3"
-  }
+    "devDependencies": {
+        "@types/node": "~20.17.48",
+        "shx": "~0.4.0",
+        "typescript": "~5.8.3"
+    },
+    "volta": {
+        "node": "20.19.2",
+        "npm": "10.8.2"
+    },
+    "workspaces": [
+        "packages/language",
+        "packages/cli",
+        "packages/extension"
+    ]
 }

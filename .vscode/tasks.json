@@ -1,32 +1,21 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "type": "npm",
-      "script": "compile",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "type": "npm",
-      "script": "watch",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": ["$tsc-watch"]
-    }
-  ]
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build liquid-sellhub",
+            "command": "npm run langium:generate && npm run build",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Langium: Generate grammar and build the liquid-sellhub language",
+            "icon": {
+                "color": "terminal.ansiGreen",
+                "id": "server-process"
+            }
+        }
+    ]
 }

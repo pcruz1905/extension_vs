@@ -147,10 +147,10 @@ connection.onHover(
   async (
     textDocumentPosition: TextDocumentPositionParams
   ): Promise<Hover | null> => {
-    if (!completionProvider) return null;
+    if (!completionProvider){ return null;}
 
     const document = documents.get(textDocumentPosition.textDocument.uri);
-    if (!document) return null;
+    if (!document) {return null;}
 
     return await completionProvider.provideHover(
       document,

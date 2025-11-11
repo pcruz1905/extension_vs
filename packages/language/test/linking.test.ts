@@ -2,16 +2,16 @@ import { afterEach, beforeAll, describe, expect, test } from "vitest";
 import { EmptyFileSystem, type LangiumDocument } from "langium";
 import { expandToString as s } from "langium/generate";
 import { clearDocuments, parseHelper } from "langium/test";
-import type { Model } from "liquid-sellhub-language";
-import { createLiquidSellhubServices, isModel } from "liquid-sellhub-language";
+import type { Document } from "liquid-sellhub-language";
+import { createLiquidSellhubServices, isDocument } from "liquid-sellhub-language";
 
 let services: ReturnType<typeof createLiquidSellhubServices>;
-let parse:    ReturnType<typeof parseHelper<Model>>;
-let document: LangiumDocument<Model> | undefined;
+let parse:    ReturnType<typeof parseHelper<Document>>;
+let document: LangiumDocument<Document> | undefined;
 
 beforeAll(async () => {
     services = createLiquidSellhubServices(EmptyFileSystem);
-    parse = parseHelper<Model>(services.LiquidSellhub);
+    parse = parseHelper<Document>(services.LiquidSellhub);
 
     // activate the following if your linking test requires elements from a built-in library, for example
     // await services.shared.workspace.WorkspaceManager.initializeWorkspace([]);
@@ -48,6 +48,6 @@ function checkDocumentValid(document: LangiumDocument): string | undefined {
           ${document.parseResult.parserErrors.map(e => e.message).join('\n  ')}
     `
         || document.parseResult.value === undefined && `ParseResult is 'undefined'.`
-        || !isModel(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Model'.`
+        || !isDocument(document.parseResult.value) && `Root AST object is a ${document.parseResult.value.$type}, expected a 'Document'.`
         || undefined;
 }

@@ -1,6 +1,6 @@
 grammar LiquidSellhub
 
-entry Model:
+entry Document:
     (persons+=Person | greetings+=Greeting)*;
 
 Person:

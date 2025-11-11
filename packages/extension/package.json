@@ -1,8 +1,8 @@
 {
-    "name": "vscode-sellhub-liquid",
+    "name": "vscode-liquid-sellhub",
     "description": "The extension specific package",
     "version": "0.0.1",
-    "displayName": "sellhub-liquid",
+    "displayName": "liquid-sellhub",
     "type": "module",
     "engines": {
         "vscode": "^1.67.0"
@@ -13,7 +13,7 @@
     "contributes": {
         "languages": [{
             "id": "liquid-sellhub",
-            "aliases": ["LiquidSellhub", "liquid-sellhub"],
+            "aliases": ["Liquid Sellhub", "liquid-sellhub"],
             "extensions": [".liquid"],
             "configuration": "./language-configuration.json"
         }],

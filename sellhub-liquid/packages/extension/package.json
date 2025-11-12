@@ -12,31 +12,31 @@
     ],
     "contributes": {
         "languages": [{
-            "id": "liquid-sellhub",
-            "aliases": ["LiquidSellhub", "liquid-sellhub"],
+            "id": "sellhubliquid",
+            "aliases": ["sellhubliquid", "sellhubliquid"],
             "extensions": [".liquid"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
-            "language": "liquid-sellhub",
-            "scopeName": "source.liquid-sellhub",
-            "path": "syntaxes/liquid-sellhub.tmLanguage.json"
+            "language": "sellhubliquid",
+            "scopeName": "source.sellhubliquid",
+            "path": "syntaxes/sellhubliquid.tmLanguage.json"
         }]
     },
     "activationEvents": [
-        "onLanguage:liquid-sellhub"
+        "onLanguage:sellhubliquid"
     ],
     "main": "./out/extension/main.cjs",
     "scripts": {
         "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
         "vscode:prepublish": "npm run build",
-        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/liquid-sellhub.tmLanguage.json ./syntaxes/liquid-sellhub.tmLanguage.json",
+        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/sellhubliquid.tmLanguage.json ./syntaxes/sellhubliquid.tmLanguage.json",
         "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
         "build:clean": "npm run clean && npm run build",
         "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
     },
     "dependencies": {
-        "liquid-sellhub-language": "0.0.1",
+        "sellhubliquid-language": "0.0.1",
         "vscode-languageclient": "~9.0.1",
         "vscode-languageserver": "~9.0.1"
     },

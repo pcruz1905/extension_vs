@@ -1,4 +1,4 @@
-grammar LiquidSellhub
+grammar Sellhubliquid
 
 entry Model:
     (persons+=Person | greetings+=Greeting)*;

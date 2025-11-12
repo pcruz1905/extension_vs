@@ -34,13 +34,13 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
 
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: '*', language: 'liquid-sellhub' }]
+        documentSelector: [{ scheme: '*', language: 'sellhubliquid' }]
     };
 
     // Create the language client and start the client.
     const client = new LanguageClient(
-        'liquid-sellhub',
-        'LiquidSellhub',
+        'sellhubliquid',
+        'sellhubliquid',
         serverOptions,
         clientOptions
     );

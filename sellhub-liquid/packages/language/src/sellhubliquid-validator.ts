@@ -1,14 +1,14 @@
 import type { ValidationAcceptor, ValidationChecks } from 'langium';
-import type { LiquidSellhubAstType, Person } from './generated/ast.js';
-import type { LiquidSellhubServices } from './liquid-sellhub-module.js';
+import type { SellhubliquidAstType, Person } from './generated/ast.js';
+import type { SellhubliquidServices } from './sellhubliquid-module.js';
 
 /**
  * Register custom validation checks.
  */
-export function registerValidationChecks(services: LiquidSellhubServices) {
+export function registerValidationChecks(services: SellhubliquidServices) {
     const registry = services.validation.ValidationRegistry;
-    const validator = services.validation.LiquidSellhubValidator;
-    const checks: ValidationChecks<LiquidSellhubAstType> = {
+    const validator = services.validation.SellhubliquidValidator;
+    const checks: ValidationChecks<SellhubliquidAstType> = {
         Person: validator.checkPersonStartsWithCapital
     };
     registry.register(checks, validator);
@@ -17,7 +17,7 @@ export function registerValidationChecks(services: LiquidSellhubServices) {
 /**
  * Implementation of custom validations.
  */
-export class LiquidSellhubValidator {
+export class SellhubliquidValidator {
 
     checkPersonStartsWithCapital(person: Person, accept: ValidationAcceptor): void {
         if (person.name) {

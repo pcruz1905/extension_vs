@@ -1,8 +1,8 @@
 {
-    "name": "vscode-sellhub-liquid",
+    "name": "vscode-liquid-sellhub",
     "description": "The extension specific package",
     "version": "0.0.1",
-    "displayName": "sellhub-liquid",
+    "displayName": "liquid-sellhub",
     "type": "module",
     "engines": {
         "vscode": "^1.67.0"
@@ -12,31 +12,31 @@
     ],
     "contributes": {
         "languages": [{
-            "id": "sellhubliquid",
-            "aliases": ["sellhubliquid", "sellhubliquid"],
+            "id": "liquid-sellhub",
+            "aliases": ["Liquid Sellhub", "liquid-sellhub"],
             "extensions": [".liquid"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
-            "language": "sellhubliquid",
-            "scopeName": "source.sellhubliquid",
-            "path": "syntaxes/sellhubliquid.tmLanguage.json"
+            "language": "liquid-sellhub",
+            "scopeName": "source.liquid-sellhub",
+            "path": "syntaxes/liquid-sellhub.tmLanguage.json"
         }]
     },
     "activationEvents": [
-        "onLanguage:sellhubliquid"
+        "onLanguage:liquid-sellhub"
     ],
     "main": "./out/extension/main.cjs",
     "scripts": {
         "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
         "vscode:prepublish": "npm run build",
-        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/sellhubliquid.tmLanguage.json ./syntaxes/sellhubliquid.tmLanguage.json",
+        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/liquid-sellhub.tmLanguage.json ./syntaxes/liquid-sellhub.tmLanguage.json",
         "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
         "build:clean": "npm run clean && npm run build",
         "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
     },
     "dependencies": {
-        "sellhubliquid-language": "0.0.1",
+        "liquid-sellhub-language": "0.0.1",
         "vscode-languageclient": "~9.0.1",
         "vscode-languageserver": "~9.0.1"
     },

@@ -10,6 +10,7 @@
   "engines": {
     "vscode": "^1.80.0"
   },
+  "icon": "src/sellhub-liquid-extension/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/pcruz1905/extension_vs"

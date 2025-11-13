@@ -1,0 +1,107 @@
+{
+  "name": "vscode-sellhub-liquid",
+  "description": "The extension specific package",
+  "version": "0.0.1",
+  "displayName": "sellhub-liquid",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.67.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sellhub-liquid",
+        "aliases": [
+          "sellhub liquid",
+          "sellhub-liquid"
+        ],
+        "extensions": [
+          ".liquid"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sellhub-liquid",
+        "scopeName": "source.sellhub-liquid",
+        "path": "syntaxes/sellhub-liquid.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sellhub-liquid.syncComponents",
+        "title": "Sellhub Liquid: Sync Components from R2",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhub-liquid.refreshCache",
+        "title": "Sellhub Liquid: Refresh Component Cache",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhub-liquid.showCacheStats",
+        "title": "Sellhub Liquid: Show Cache Statistics",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhub-liquid.testConnection",
+        "title": "Sellhub Liquid: Test R2 Connection",
+        "category": "Sellhubb"
+      }
+    ],
+    "configuration": {
+      "title": "Sellhub Liquid",
+      "properties": {
+        "sellhub-liquid.r2AccountId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare account ID for accessing R2"
+        },
+        "sellhub-liquid.r2AccessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 API Access Key with R2 access"
+        },
+        "sellhub-liquid.r2SecretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 API Secret Key with R2 access"
+        },
+        "sellhub-liquid.r2BucketName": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Bucket name where components stored"
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "onLanguage:sellhub-liquid"
+  ],
+  "main": "./out/extension/main.cjs",
+  "scripts": {
+    "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
+    "vscode:prepublish": "npm run build",
+    "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/sellhub-liquid.tmLanguage.json ./syntaxes/sellhub-liquid.tmLanguage.json",
+    "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
+    "build:clean": "npm run clean && npm run build",
+    "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
+  },
+  "dependencies": {
+    "sellhub-liquid-language": "0.0.1",
+    "vscode-languageclient": "~9.0.1",
+    "vscode-languageserver": "~9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "~1.67.0",
+    "concurrently": "~8.2.1",
+    "esbuild": "~0.25.5"
+  },
+  "vsce": {
+    "dependencies": false
+  }
+}

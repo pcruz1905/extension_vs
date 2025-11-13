@@ -9,23 +9,21 @@ Element:
     LiquidTag | LiquidOutput | TextContent;
 
 // Text content (HTML, plain text, etc.)
-// Accepts TEXT_CONTENT terminal OR sequences of ID/keywords that appear outside Liquid tags
-// Include ALL keywords that might appear in plain text (to prevent parser conflicts)
+// Accepts TEXT_CONTENT terminal and other tokens that appear in HTML outside Liquid delimiters
+// Includes all tokens that might appear in HTML/prose (symbols, keywords, literals)
 TextContent:
-    parts+=(TEXT_CONTENT | ID | NUMBER | BOOLEAN |
-            // Logical/comparison keywords
-            KW_NOT | KW_AND | KW_OR | KW_IN | KW_AS | KW_WITH | KW_FOR |
-            // Control flow keywords (can appear in prose)
-            KW_IF | KW_ELSIF | KW_ELSE | KW_ENDIF | KW_UNLESS | KW_ENDUNLESS |
+    parts+=(TEXT_CONTENT | STRING | ID | NUMBER | BOOLEAN |
+            // Keywords that can appear in prose/HTML
+            KW_NOT | KW_AND | KW_OR | KW_AS | KW_FOR | KW_IN | KW_WITH |
+            KW_IF | KW_ELSE | KW_ELSIF | KW_ENDIF | KW_UNLESS | KW_ENDUNLESS |
             KW_CASE | KW_WHEN | KW_ENDCASE |
-            // Loop keywords
             KW_BREAK | KW_CONTINUE | KW_REVERSED |
-            // Template keywords that could appear in text
             KW_COMMENT | KW_ENDCOMMENT | KW_RAW | KW_ENDRAW |
             KW_CAPTURE | KW_ENDCAPTURE | KW_LIQUID | KW_ENDLIQUID |
             KW_ECHO | KW_RENDER | KW_INCLUDE |
-            // Symbols
-            DOT | COMMA | COLON | OP_GT | OP_LT | EQUALS)+;
+            // Symbols (for HTML, CSS, prose, etc.)
+            OP_LT | OP_GT | OP_EQ | OP_NEQ | OP_GTE | OP_LTE | EQUALS | COLON | DOT | COMMA |
+            LPAREN | RPAREN | LBRACK | RBRACK | LBRACE | RBRACE | PIPE)+;
 
 // Liquid tags ({% %})
 LiquidTag:
@@ -257,7 +255,7 @@ FilterArgument:
     (name=ID COLON)? value=FilterArgumentValue;
 
 FilterArgumentValue:
-    value=(STRING | NUMBER | BOOLEAN | ID);
+    Expression;
 
 // Literals
 Literal:
@@ -284,51 +282,52 @@ terminal TAG_END: '%}';
 
 // 2. Keywords (must come before ID!)
 // IMPORTANT: Longer keywords MUST come before shorter ones that are prefixes!
-terminal KW_ENDTABLEROW: 'endtablerow';
-terminal KW_ENDUNLESS: 'endunless';
-terminal KW_ENDCOMMENT: 'endcomment';
-terminal KW_ENDCAPTURE: 'endcapture';
-terminal KW_ENDISLAND: 'endisland';
-terminal KW_ENDLIQUID: 'endliquid';
-terminal KW_INCREMENT: 'increment';
-terminal KW_DECREMENT: 'decrement';
-terminal KW_ENDCASE: 'endcase';
-terminal KW_CONTAINS: 'contains';
-terminal KW_CONTINUE: 'continue';
-terminal KW_TABLEROW: 'tablerow';
-terminal KW_REVERSED: 'reversed';
-terminal KW_HYDRATE: 'hydrate';
-terminal KW_INCLUDE: 'include';
-terminal KW_CAPTURE: 'capture';
-terminal KW_COMMENT: 'comment';
-terminal KW_ENDRAW: 'endraw';
-terminal KW_ENDFOR: 'endfor';
-terminal KW_ENDIF: 'endif';
-terminal KW_UNLESS: 'unless';
-terminal KW_ISLAND: 'island';
-terminal KW_LIQUID: 'liquid';
-terminal KW_OFFSET: 'offset';
-terminal KW_RENDER: 'render';
-terminal KW_ASSIGN: 'assign';
-terminal KW_ELSIF: 'elsif';
-terminal KW_PROPS: 'props';
-terminal KW_LIMIT: 'limit';
-terminal KW_CYCLE: 'cycle';
-terminal KW_BREAK: 'break';
-terminal KW_ELSE: 'else';
-terminal KW_CASE: 'case';
-terminal KW_WHEN: 'when';
-terminal KW_WITH: 'with';
-terminal KW_COLS: 'cols';
-terminal KW_ECHO: 'echo';
-terminal KW_FOR: 'for';
-terminal KW_RAW: 'raw';
-terminal KW_AND: 'and';
-terminal KW_NOT: 'not';
-terminal KW_OR: 'or';
-terminal KW_AS: 'as';
-terminal KW_IF: 'if';
-terminal KW_IN: 'in';
+// IMPORTANT: Keywords use negative lookahead to prevent matching identifier prefixes (e.g., "forloop")
+terminal KW_ENDTABLEROW: /endtablerow(?![_a-zA-Z0-9-])/;
+terminal KW_ENDUNLESS: /endunless(?![_a-zA-Z0-9-])/;
+terminal KW_ENDCOMMENT: /endcomment(?![_a-zA-Z0-9-])/;
+terminal KW_ENDCAPTURE: /endcapture(?![_a-zA-Z0-9-])/;
+terminal KW_ENDISLAND: /endisland(?![_a-zA-Z0-9-])/;
+terminal KW_ENDLIQUID: /endliquid(?![_a-zA-Z0-9-])/;
+terminal KW_INCREMENT: /increment(?![_a-zA-Z0-9-])/;
+terminal KW_DECREMENT: /decrement(?![_a-zA-Z0-9-])/;
+terminal KW_ENDCASE: /endcase(?![_a-zA-Z0-9-])/;
+terminal KW_CONTAINS: /contains(?![_a-zA-Z0-9-])/;
+terminal KW_CONTINUE: /continue(?![_a-zA-Z0-9-])/;
+terminal KW_TABLEROW: /tablerow(?![_a-zA-Z0-9-])/;
+terminal KW_REVERSED: /reversed(?![_a-zA-Z0-9-])/;
+terminal KW_HYDRATE: /hydrate(?![_a-zA-Z0-9-])/;
+terminal KW_INCLUDE: /include(?![_a-zA-Z0-9-])/;
+terminal KW_CAPTURE: /capture(?![_a-zA-Z0-9-])/;
+terminal KW_COMMENT: /comment(?![_a-zA-Z0-9-])/;
+terminal KW_ENDRAW: /endraw(?![_a-zA-Z0-9-])/;
+terminal KW_ENDFOR: /endfor(?![_a-zA-Z0-9-])/;
+terminal KW_ENDIF: /endif(?![_a-zA-Z0-9-])/;
+terminal KW_UNLESS: /unless(?![_a-zA-Z0-9-])/;
+terminal KW_ISLAND: /island(?![_a-zA-Z0-9-])/;
+terminal KW_LIQUID: /liquid(?![_a-zA-Z0-9-])/;
+terminal KW_OFFSET: /offset(?![_a-zA-Z0-9-])/;
+terminal KW_RENDER: /render(?![_a-zA-Z0-9-])/;
+terminal KW_ASSIGN: /assign(?![_a-zA-Z0-9-])/;
+terminal KW_ELSIF: /elsif(?![_a-zA-Z0-9-])/;
+terminal KW_PROPS: /props(?![_a-zA-Z0-9-])/;
+terminal KW_LIMIT: /limit(?![_a-zA-Z0-9-])/;
+terminal KW_CYCLE: /cycle(?![_a-zA-Z0-9-])/;
+terminal KW_BREAK: /break(?![_a-zA-Z0-9-])/;
+terminal KW_ELSE: /else(?![_a-zA-Z0-9-])/;
+terminal KW_CASE: /case(?![_a-zA-Z0-9-])/;
+terminal KW_WHEN: /when(?![_a-zA-Z0-9-])/;
+terminal KW_WITH: /with(?![_a-zA-Z0-9-])/;
+terminal KW_COLS: /cols(?![_a-zA-Z0-9-])/;
+terminal KW_ECHO: /echo(?![_a-zA-Z0-9-])/;
+terminal KW_FOR: /for(?![_a-zA-Z0-9-])/;
+terminal KW_RAW: /raw(?![_a-zA-Z0-9-])/;
+terminal KW_AND: /and(?![_a-zA-Z0-9-])/;
+terminal KW_NOT: /not(?![_a-zA-Z0-9-])/;
+terminal KW_OR: /or(?![_a-zA-Z0-9-])/;
+terminal KW_AS: /as(?![_a-zA-Z0-9-])/;
+terminal KW_IF: /if(?![_a-zA-Z0-9-])/;
+terminal KW_IN: /in(?![_a-zA-Z0-9-])/;
 
 // 3. Operators and symbols (before TEXT_CONTENT)
 // Comparison operators (2-char operators MUST come before 1-char!)
@@ -373,5 +372,6 @@ hidden terminal WS: /[ \t\r\n]+/;
 
 // 10. Text content - MUST BE LAST! (catches everything not matched above)
 // Matches: any character sequence that's not a Liquid delimiter start
-// This includes: plain text, HTML tags, etc.
+// This includes: plain text, HTML tags, quoted strings in HTML attributes, etc.
+// Note: This will match more greedily than STRING terminal when outside Liquid tags
 terminal TEXT_CONTENT: /([^{]|{(?![{%]))+/;

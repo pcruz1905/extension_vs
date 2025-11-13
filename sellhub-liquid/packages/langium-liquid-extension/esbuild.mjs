@@ -17,8 +17,8 @@ function padZeroes(i) {
 
 const plugins = [{
     name: 'watch-plugin',
-    setup(build) {
-        build.onEnd(result => {
+    setup(build: esbuild.PluginBuild) {
+        build.onEnd((result: esbuild.BuildResult) => {
             if (result.errors.length === 0) {
                 console.log(getTime() + success);
             }

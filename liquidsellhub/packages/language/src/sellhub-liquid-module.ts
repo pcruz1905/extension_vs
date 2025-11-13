@@ -11,9 +11,9 @@ import { SellhubLiquidGeneratedModule, SellhubLiquidGeneratedSharedModule } from
 import { SellhubLiquidValidator, registerValidationChecks } from './sellhub-liquid-validator.js';
 import { R2Client } from './services/r2-client.js';
 import { ConfigService } from './services/config-service.js';
-//import { IslandsCompletionProvider } from './providers/islands-completion-provider.js';
-//import { ContextCompletionProvider } from './providers/context-completion-provider.js';
-//import { IslandsHoverProvider } from './providers/islands-hover-provider.js';
+import { IslandsCompletionProvider } from './providers/islands-completion-provider.js';
+import { ContextCompletionProvider } from './providers/context-completion-provider.js';
+import { IslandsHoverProvider } from './providers/islands-hover-provider.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -26,11 +26,11 @@ export type SellhubLiquidAddedServices = {
         R2Client: R2Client,
         ConfigService: ConfigService
     },
-//    providers: {
-//        IslandsCompletionProvider: IslandsCompletionProvider,
-//        ContextCompletionProvider: ContextCompletionProvider,
-//        IslandsHoverProvider: IslandsHoverProvider
-//    }
+    providers: {
+        IslandsCompletionProvider: IslandsCompletionProvider,
+        ContextCompletionProvider: ContextCompletionProvider,
+        IslandsHoverProvider: IslandsHoverProvider
+    }
 }
 
 /**
@@ -61,17 +61,17 @@ export const SellhubLiquidModule: Module<SellhubLiquidServices, PartialLangiumSe
             return new R2Client(config);
         }
     },
-//    providers: {
-//        IslandsCompletionProvider: (services) => {
-//            const r2Client = services.services.R2Client;
-//            return new IslandsCompletionProvider(services, r2Client);
-//        },
-//        ContextCompletionProvider: () => new ContextCompletionProvider(),
-//        IslandsHoverProvider: (services) => {
-//            const r2Client = services.services.R2Client;
-//            return new IslandsHoverProvider(r2Client);
-//        }
-//    },
+    providers: {
+        IslandsCompletionProvider: (services) => {
+            const r2Client = services.services.R2Client;
+            return new IslandsCompletionProvider(services, r2Client);
+        },
+        ContextCompletionProvider: () => new ContextCompletionProvider(),
+        IslandsHoverProvider: (services) => {
+            const r2Client = services.services.R2Client;
+            return new IslandsHoverProvider(r2Client);
+        }
+    },
     validation: {
         SellhubLiquidValidator: (services) => {
             const r2Client = services.services.R2Client;
@@ -79,7 +79,7 @@ export const SellhubLiquidModule: Module<SellhubLiquidServices, PartialLangiumSe
         }
     },
     lsp: {
-//        CompletionProvider: (services) => services.providers.IslandsCompletionProvider
+        CompletionProvider: (services) => services.providers.IslandsCompletionProvider
     }
 };
 

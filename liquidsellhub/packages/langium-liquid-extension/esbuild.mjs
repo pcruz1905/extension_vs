@@ -11,16 +11,13 @@ function getTime() {
     return `[${`${padZeroes(date.getHours())}:${padZeroes(date.getMinutes())}:${padZeroes(date.getSeconds())}`}] `;
 }
 
-// @ts-ignore
 function padZeroes(i) {
     return i.toString().padStart(2, '0');
 }
 
 const plugins = [{
     name: 'watch-plugin',
-    // @ts-ignore
     setup(build) {
-        // @ts-ignore
         build.onEnd(result => {
             if (result.errors.length === 0) {
                 console.log(getTime() + success);

@@ -24,5 +24,8 @@
     "workspaces": [
         "packages/language",
         "packages/extension"
-    ]
+    ],
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.930.0"
+    }
 }

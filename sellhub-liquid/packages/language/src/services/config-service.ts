@@ -31,8 +31,8 @@ export class ConfigService {
       if (this.configurationProvider) {
         // Running inside language server
         const result = await this.configurationProvider.getConfiguration(
-          "liquid",
-          "sellhub-liquid"
+          "sellhub-liquid",
+          ""
         );
         this.config = this.normalizeConfig(result);
       } else if (vscode?.workspace) {
@@ -91,6 +91,15 @@ export class ConfigService {
       c.r2AccessKeyId &&
       c.r2SecretAccessKey
     );
+  }
+
+  public getValidationErrors() {
+    return [
+      "sellhub-liquid.r2AccountId is empty",
+      "sellhub-liquid.r2BucketName",
+      "sellhub-liquid.r2AccessKeyId",
+      "sellhub-liquid.r2SecretAccessKey",
+    ];
   }
 
   /**

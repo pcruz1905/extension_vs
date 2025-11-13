@@ -14,17 +14,17 @@
     "main": "./out/index.js",
     "module": "./out/index.js",
     "exports": {
-      ".": {
-        "types": "./out/index.d.ts",
-        "default": "./out/index.js"
-      }
+        ".": {
+            "types": "./out/index.d.ts",
+            "default": "./out/index.js"
+        }
     },
     "typesVersions": {
-      "*": {
-        ".": [
-          "out/index"
-        ]
-      }
+        "*": {
+            ".": [
+                "out/index"
+            ]
+        }
     },
     "scripts": {
         "clean": "shx rm -fr *.tsbuildinfo out",

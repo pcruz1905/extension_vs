@@ -1,6 +1,10 @@
 {
   "name": "sellhub-liquid-workspace",
-  "description": "Base workspace package",
+  "description": "VS Code extension for Sellhub Liquid syntax highlighting and component management",
+  "displayName": "Sellhub Liquid",
+  "categories": [
+    "Programming Languages"
+  ],
   "version": "0.0.1",
   "type": "module",
   "engines": {
@@ -31,7 +35,7 @@
   },
   "workspaces": [
     "packages/language",
-    "packages/langium-liquid-extension"
+    "packages/extension"
   ],
   "dependencies": {
     "@aws-sdk/client-s3": "^3.930.0"

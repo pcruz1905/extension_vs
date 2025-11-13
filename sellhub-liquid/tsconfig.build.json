@@ -5,7 +5,7 @@
             "path": "./packages/language/tsconfig.src.json"
         },
         {
-            "path": "./packages/langium-liquid-extension/tsconfig.json"
+            "path": "./packages/extension/tsconfig.json"
         }
     ]
 }

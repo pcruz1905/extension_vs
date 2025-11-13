@@ -7,7 +7,7 @@
   "engines": {
     "vscode": "^1.67.0"
   },
-  "icon": "assets/icon.png",
+  "icon": "src/extension/assets/icon.png",
   "categories": [
     "Programming Languages"
   ],

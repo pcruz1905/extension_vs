@@ -1,0 +1,22 @@
+# Ignore source TypeScript files
+src/
+tests/
+
+# Ignore build configs
+tsconfig.json
+tsconfig.build.json
+
+# Ignore node_modules except production dependencies
+node_modules/**/*.d.ts
+node_modules/**/*.ts
+
+# Ignore .git folder
+.git
+.gitignore
+
+# Ignore markdown docs
+*.md
+
+# Ignore local language package folder if present
+node_modules/
+packages/

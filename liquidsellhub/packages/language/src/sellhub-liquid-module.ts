@@ -16,6 +16,7 @@ import { ContextCompletionProvider } from './providers/context-completion-provid
 import { IslandsHoverProvider } from './providers/islands-hover-provider.js';
 import { IslandsCodeActionProvider } from './providers/islands-code-action-provider.js';
 import { LiquidFormatter } from './providers/liquid-formatter.js';
+import { LiquidFoldingRangeProvider } from './providers/liquid-folding-language-provider.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -110,7 +111,8 @@ export const SellhubLiquidModule: Module<SellhubLiquidServices, PartialLangiumSe
     lsp: {
         CompletionProvider: (services) => services.providers.IslandsCompletionProvider,
         CodeActionProvider: (services) => services.providers.IslandsCodeActionProvider,
-        Formatter: () => new LiquidFormatter()
+        Formatter: () => new LiquidFormatter(),
+        FoldingRangeProvider: () => new LiquidFoldingRangeProvider()
     }
 };
 

@@ -105,14 +105,14 @@ These settings are declared in `package.json` under `contributes.configuration`:
 
 ## Usage
 
-1. **Install dependencies and build**:
+1.**Install dependencies and build**:
 
 ```bash
 npm install
 npm run compile
 ```
 
-2. **Run extension in VS Code**:
+2.**Run extension in VS Code**:
 
 - Press `F5` to launch the Extension Development Host.
 - Open a `.liquid` file to get syntax highlighting.

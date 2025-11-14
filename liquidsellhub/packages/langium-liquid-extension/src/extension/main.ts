@@ -7,10 +7,27 @@ let client: LanguageClient;
 
 // This function is called when the extension is activated.
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    client = await startLanguageClient(context);
+    console.log('='.repeat(80));
+    console.log('🚀 [EXTENSION] Sellhub Liquid Extension Activating...');
+    console.log('='.repeat(80));
 
+    console.log('🔌 [EXTENSION] Starting Language Client...');
+    client = await startLanguageClient(context);
+    console.log('✅ [EXTENSION] Language Client started successfully');
+
+    console.log('📝 [EXTENSION] Registering custom commands...');
     // Register custom commands
     registerCommands(context, client);
+    console.log('✅ [EXTENSION] Custom commands registered');
+
+    console.log('🏷️ [EXTENSION] Registering auto-closing tags...');
+    // Register auto-closing tags for Liquid blocks
+    registerAutoClosingTags(context);
+    console.log('✅ [EXTENSION] Auto-closing tags registered');
+
+    console.log('='.repeat(80));
+    console.log('🎉 [EXTENSION] Sellhub Liquid Extension ACTIVATED');
+    console.log('='.repeat(80));
 }
 
 // This function is called when the extension is deactivated.
@@ -22,11 +39,16 @@ export function deactivate(): Thenable<void> | undefined {
 }
 
 async function startLanguageClient(context: vscode.ExtensionContext): Promise<LanguageClient> {
+    console.log('🔧 [EXTENSION] startLanguageClient() called');
+
     const serverModule = context.asAbsolutePath(path.join('out', 'language', 'main.cjs'));
+    console.log('📂 [EXTENSION] Server module path:', serverModule);
+
     // The debug options for the server
     // --inspect=6009: runs the server in Node's Inspector mode so VS Code can attach to the server for debugging.
     // By setting `process.env.DEBUG_BREAK` to a truthy value, the language server will wait until a debugger is attached.
     const debugOptions = { execArgv: ['--nolazy', `--inspect${process.env.DEBUG_BREAK ? '-brk' : ''}=${process.env.DEBUG_SOCKET || '6009'}`] };
+    console.log('🐛 [EXTENSION] Debug options:', debugOptions);
 
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
@@ -34,12 +56,15 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
         run: { module: serverModule, transport: TransportKind.ipc },
         debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
     };
+    console.log('⚙️ [EXTENSION] Server options configured');
 
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: '*', language: 'sellhub-liquid' }]
     };
+    console.log('⚙️ [EXTENSION] Client options configured for language: sellhub-liquid');
 
+    console.log('🏗️ [EXTENSION] Creating LanguageClient...');
     // Create the language client and start the client.
     const client = new LanguageClient(
         'sellhub-liquid',
@@ -47,10 +72,47 @@ async function startLanguageClient(context: vscode.ExtensionContext): Promise<La
         serverOptions,
         clientOptions
     );
+    console.log('✅ [EXTENSION] LanguageClient created');
 
+    console.log('▶️ [EXTENSION] Starting client (this will also launch the server)...');
     // Start the client. This will also launch the server
     await client.start();
+    console.log('✅ [EXTENSION] Client started successfully!');
+
+    // Send R2 configuration to the LSP server
+    console.log('📤 [EXTENSION] Reading R2 configuration from VS Code settings...');
+    await sendConfigurationToServer(client);
+
     return client;
+}
+
+async function sendConfigurationToServer(client: LanguageClient): Promise<void> {
+    try {
+        // Read configuration directly from VS Code settings
+        const config = vscode.workspace.getConfiguration('sellhubb');
+
+        const r2AccountId = config.get<string>('r2AccountId', '');
+        const r2AccessKeyId = config.get<string>('r2AccessKeyId', '');
+        const r2SecretAccessKey = config.get<string>('r2SecretAccessKey', '');
+        const r2BucketName = config.get<string>('r2BucketName', '');
+
+        console.log('📊 [EXTENSION] Config read from VS Code settings:');
+        console.log('  r2AccountId:', r2AccountId ? `${r2AccountId.substring(0, 8)}...` : 'NOT SET');
+        console.log('  r2AccessKeyId:', r2AccessKeyId ? `${r2AccessKeyId.substring(0, 8)}...` : 'NOT SET');
+        console.log('  r2SecretAccessKey:', r2SecretAccessKey ? '***PRESENT***' : 'NOT SET');
+        console.log('  r2BucketName:', r2BucketName || 'NOT SET');
+
+        console.log('📤 [EXTENSION] Sending configuration to LSP server...');
+        await client.sendNotification('sellhubb/updateConfiguration', {
+            r2AccountId,
+            r2AccessKeyId,
+            r2SecretAccessKey,
+            r2BucketName
+        });
+        console.log('✅ [EXTENSION] Configuration sent to LSP server successfully');
+    } catch (error) {
+        console.error('❌ [EXTENSION] Failed to send configuration to server:', error);
+    }
 }
 
 interface CommandResult {
@@ -64,17 +126,24 @@ interface CommandResult {
 }
 
 function registerCommands(context: vscode.ExtensionContext, client: LanguageClient): void {
+    console.log('📝 [EXTENSION] registerCommands() called');
+
     // Refresh cache command
+    console.log('📝 [EXTENSION] Registering command: sellhubb.refreshCache');
     context.subscriptions.push(
         vscode.commands.registerCommand('sellhubb.refreshCache', async () => {
+            console.log('📨 [EXTENSION] Command executed: sellhubb.refreshCache');
             try {
+                console.log('🌐 [EXTENSION] Sending request to LSP: sellhubb/refreshCache');
                 const result = await client.sendRequest<CommandResult>('sellhubb/refreshCache');
+                console.log('📨 [EXTENSION] Response received:', result);
                 if (result.success) {
                     vscode.window.showInformationMessage(result.message);
                 } else {
                     vscode.window.showErrorMessage(result.message);
                 }
             } catch (error) {
+                console.error('❌ [EXTENSION] Error in sellhubb.refreshCache:', error);
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 vscode.window.showErrorMessage(`Failed to refresh cache: ${errorMessage}`);
             }
@@ -127,8 +196,12 @@ function registerCommands(context: vscode.ExtensionContext, client: LanguageClie
     );
 
     // Test connection command
+    console.log('📝 [EXTENSION] Registering command: sellhubb.testConnection');
     context.subscriptions.push(
         vscode.commands.registerCommand('sellhubb.testConnection', async () => {
+            console.log('='.repeat(80));
+            console.log('🧪 [EXTENSION] Command executed: sellhubb.testConnection');
+            console.log('='.repeat(80));
             try {
                 vscode.window.withProgress(
                     {
@@ -137,18 +210,102 @@ function registerCommands(context: vscode.ExtensionContext, client: LanguageClie
                         cancellable: false
                     },
                     async () => {
+                        console.log('🌐 [EXTENSION] Sending request to LSP: sellhubb/testConnection');
                         const result = await client.sendRequest<CommandResult>('sellhubb/testConnection');
+                        console.log('📨 [EXTENSION] Response received from LSP:', result);
+
                         if (result.success) {
+                            console.log('✅ [EXTENSION] Test connection PASSED');
                             vscode.window.showInformationMessage(result.message);
                         } else {
+                            console.error('❌ [EXTENSION] Test connection FAILED');
                             vscode.window.showErrorMessage(result.message);
                         }
+                        console.log('='.repeat(80));
                     }
                 );
             } catch (error) {
+                console.error('❌ [EXTENSION] FATAL ERROR in sellhubb.testConnection');
+                console.error('❌ [EXTENSION] Error:', error);
+                console.log('='.repeat(80));
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 vscode.window.showErrorMessage(`Failed to test connection: ${errorMessage}`);
             }
         })
     );
+
+    console.log('✅ [EXTENSION] All commands registered successfully');
+}
+
+/**
+ * Register auto-closing tags for Liquid block tags
+ */
+function registerAutoClosingTags(context: vscode.ExtensionContext): void {
+    console.log('🏷️ [EXTENSION] registerAutoClosingTags() called');
+
+    // List of Liquid block tags that need closing tags
+    const blockTags = [
+        { tag: 'island', endTag: 'endisland' },
+        { tag: 'if', endTag: 'endif' },
+        { tag: 'unless', endTag: 'endunless' },
+        { tag: 'for', endTag: 'endfor' },
+        { tag: 'case', endTag: 'endcase' },
+        { tag: 'capture', endTag: 'endcapture' },
+        { tag: 'comment', endTag: 'endcomment' },
+        { tag: 'raw', endTag: 'endraw' },
+        { tag: 'tablerow', endTag: 'endtablerow' },
+        { tag: 'block', endTag: 'endblock' },
+        { tag: 'liquid', endTag: 'endliquid' }
+    ];
+
+    // Register type provider for auto-closing tags
+    const provider = vscode.languages.registerCompletionItemProvider(
+        { scheme: '*', language: 'sellhub-liquid' },
+        {
+            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
+                const linePrefix = document.lineAt(position).text.slice(0, position.character);
+
+                // Check if we just typed %} to close a tag
+                if (linePrefix.endsWith('%}')) {
+                    // Look backwards to find the opening tag
+                    for (const { tag, endTag } of blockTags) {
+                        // Pattern: {% tag ... %}
+                        const openTagPattern = new RegExp(`{%\\s*${tag}\\b[^%]*%}\\s*$`);
+
+                        if (openTagPattern.test(linePrefix)) {
+                            // Check if there's already a closing tag
+                            const fullText = document.getText();
+                            const currentOffset = document.offsetAt(position);
+                            const textAfter = fullText.slice(currentOffset);
+
+                            // Only add end tag if it doesn't already exist
+                            const endTagPattern = new RegExp(`{%\\s*${endTag}\\s*%}`);
+                            if (!endTagPattern.test(textAfter.slice(0, 200))) { // Check next 200 chars
+                                const completionItem = new vscode.CompletionItem(
+                                    `Close ${tag} block`,
+                                    vscode.CompletionItemKind.Snippet
+                                );
+                                completionItem.insertText = new vscode.SnippetString(`\n\t$0\n{% ${endTag} %}`);
+                                completionItem.detail = `Auto-close {% ${tag} %} block`;
+                                completionItem.documentation = `Automatically insert {% ${endTag} %} to close the ${tag} block`;
+                                completionItem.sortText = '0'; // Sort to top
+                                completionItem.command = {
+                                    command: 'editor.action.triggerSuggest',
+                                    title: 'Re-trigger completions'
+                                };
+
+                                return [completionItem];
+                            }
+                        }
+                    }
+                }
+
+                return undefined;
+            }
+        },
+        '}' // Trigger on closing brace
+    );
+
+    context.subscriptions.push(provider);
+    console.log('✅ [EXTENSION] Auto-closing tags provider registered');
 }

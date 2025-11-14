@@ -4,6 +4,8 @@
  */
 
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { ComponentManifest, ComponentMetadata, R2Config, CacheEntry } from '../types/index.js';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -17,31 +19,78 @@ export class R2Client {
     private metadataCache: Map<string, CacheEntry<ComponentMetadata>> = new Map();
 
     constructor(config: R2Config) {
+        console.log('🚀 [R2Client] Constructor called');
+        console.log('🔧 [R2Client] Config received:', JSON.stringify({
+            r2AccountId: config.r2AccountId ? `${config.r2AccountId.substring(0, 8)}...` : 'MISSING',
+            r2AccessKeyId: config.r2AccessKeyId ? `${config.r2AccessKeyId.substring(0, 8)}...` : 'MISSING',
+            r2SecretAccessKey: config.r2SecretAccessKey ? '***PRESENT***' : 'MISSING',
+            r2BucketName: config.r2BucketName || 'MISSING'
+        }, null, 2));
+
         this.config = config;
+        console.log('📋 [R2Client] Config stored, calling initializeClient()...');
         this.initializeClient();
+        console.log('✅ [R2Client] Constructor completed');
     }
 
     /**
      * Initialize the S3 client with R2 configuration
      */
     private initializeClient(): void {
+        console.log('🔍 [R2Client] initializeClient() called');
+        console.log('🔍 [R2Client] Validating configuration...');
+
         if (!this.isConfigValid()) {
-            console.warn('R2Client: Invalid configuration, client not initialized');
+            console.error('❌ [R2Client] Configuration validation FAILED!');
+            console.error('❌ [R2Client] Invalid configuration, client not initialized');
+            console.error('❌ [R2Client] Check your R2 credentials in settings');
             return;
         }
 
+        console.log('✅ [R2Client] Configuration validation PASSED');
+        console.log('🔗 [R2Client] Creating S3Client...');
+        console.log('🔗 [R2Client] Endpoint will be:', `https://${this.config.r2AccountId}.r2.cloudflarestorage.com`);
+        console.log('🔗 [R2Client] Region:', 'auto');
+        console.log('🔗 [R2Client] Bucket:', this.config.r2BucketName);
+
+        // Check for proxy configuration
+        const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.HTTP_PROXY;
+        if (proxyUrl) {
+            console.log('🌐 [R2Client] Proxy detected:', proxyUrl.substring(0, 50) + '...');
+        }
+
         try {
-            this.s3Client = new S3Client({
+            const s3Config: any = {
                 endpoint: `https://${this.config.r2AccountId}.r2.cloudflarestorage.com`,
                 region: 'auto',
                 credentials: {
                     accessKeyId: this.config.r2AccessKeyId,
                     secretAccessKey: this.config.r2SecretAccessKey,
                 },
-            });
-            console.log('R2Client: Successfully initialized');
+                forcePathStyle: true, // Required for R2 to avoid bucket-in-hostname
+            };
+
+            // Add proxy support if proxy is configured
+            if (proxyUrl) {
+                console.log('🔧 [R2Client] Configuring proxy agent...');
+                const proxyAgent = new HttpsProxyAgent(proxyUrl);
+                s3Config.requestHandler = new NodeHttpHandler({
+                    httpAgent: proxyAgent,
+                    httpsAgent: proxyAgent,
+                });
+                console.log('✅ [R2Client] Proxy agent configured');
+            }
+
+            this.s3Client = new S3Client(s3Config);
+            console.log('✅ [R2Client] S3Client created successfully!');
+            console.log('✅ [R2Client] R2Client initialized and ready to use');
         } catch (error) {
-            console.error('R2Client: Failed to initialize S3 client:', error);
+            console.error('❌ [R2Client] FATAL ERROR: Failed to initialize S3 client');
+            console.error('❌ [R2Client] Error details:', error);
+            if (error instanceof Error) {
+                console.error('❌ [R2Client] Error message:', error.message);
+                console.error('❌ [R2Client] Error stack:', error.stack);
+            }
             this.s3Client = null;
         }
     }
@@ -88,9 +137,16 @@ export class R2Client {
      * Fetch an object from R2 bucket
      */
     private async fetchObject(key: string): Promise<string> {
+        console.log(`📥 [R2Client] fetchObject() called with key: "${key}"`);
+
         if (!this.s3Client) {
+            console.error('❌ [R2Client] fetchObject() FAILED: S3Client is not initialized');
             throw new Error('R2Client not initialized. Please check your configuration.');
         }
+
+        console.log('📤 [R2Client] S3Client exists, preparing GetObjectCommand...');
+        console.log('📤 [R2Client] Bucket:', this.config.r2BucketName);
+        console.log('📤 [R2Client] Key:', key);
 
         try {
             const command = new GetObjectCommand({
@@ -98,17 +154,43 @@ export class R2Client {
                 Key: key,
             });
 
+            console.log('🌐 [R2Client] Sending command to R2...');
+            const startTime = Date.now();
             const response = await this.s3Client.send(command);
+            const endTime = Date.now();
+            const duration = endTime - startTime;
+
+            console.log(`✅ [R2Client] Response received in ${duration}ms`);
+            console.log('📊 [R2Client] Response metadata:', {
+                ContentType: response.ContentType,
+                ContentLength: response.ContentLength,
+                LastModified: response.LastModified,
+                ETag: response.ETag
+            });
 
             if (!response.Body) {
+                console.error('❌ [R2Client] Response body is empty!');
                 throw new Error(`No data received for key: ${key}`);
             }
 
+            console.log('📄 [R2Client] Converting response body to string...');
             // Convert stream to string
             const bodyString = await response.Body.transformToString();
+            console.log(`✅ [R2Client] Successfully fetched ${bodyString.length} characters`);
+            console.log(`📄 [R2Client] First 100 chars: ${bodyString.substring(0, 100)}...`);
+
             return bodyString;
         } catch (error: any) {
-            console.error(`R2Client: Error fetching object ${key}:`, error);
+            console.error(`❌ [R2Client] FATAL ERROR fetching object "${key}"`);
+            console.error('❌ [R2Client] Error details:', error);
+            if (error instanceof Error) {
+                console.error('❌ [R2Client] Error name:', error.name);
+                console.error('❌ [R2Client] Error message:', error.message);
+                console.error('❌ [R2Client] Error stack:', error.stack);
+            }
+            if (error.$metadata) {
+                console.error('❌ [R2Client] AWS SDK metadata:', error.$metadata);
+            }
             throw new Error(`Failed to fetch ${key}: ${error.message}`);
         }
     }
@@ -188,14 +270,23 @@ export class R2Client {
      * @returns true if connection successful, false otherwise
      */
     public async testConnection(): Promise<boolean> {
+        console.log('🧪 [R2Client] testConnection() called');
+
         if (!this.s3Client) {
+            console.error('❌ [R2Client] testConnection() FAILED: S3Client is not initialized');
             return false;
         }
 
+        console.log('✅ [R2Client] S3Client exists, attempting to fetch manifest...');
+
         try {
+            console.log('🌐 [R2Client] Testing connection by fetching manifest...');
             await this.fetchObject('components:manifest');
+            console.log('✅ [R2Client] Connection test PASSED! Successfully connected to R2');
             return true;
         } catch (error) {
+            console.error('❌ [R2Client] Connection test FAILED!');
+            console.error('❌ [R2Client] Error:', error);
             return false;
         }
     }

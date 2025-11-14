@@ -1,0 +1,293 @@
+{
+  "name": "sellhub-liquid",
+  "scopeName": "source.sellhub-liquid",
+  "fileTypes": ["liquid"],
+  "patterns": [
+    { "include": "#liquid-comment" },
+    { "include": "#liquid-tag" },
+    { "include": "#liquid-output" },
+    { "include": "#html" }
+  ],
+  "repository": {
+    "liquid-comment": {
+      "patterns": [
+        {
+          "name": "comment.block.liquid",
+          "begin": "\\{%\\s*comment\\s*%\\}",
+          "end": "\\{%\\s*endcomment\\s*%\\}",
+          "captures": {
+            "0": { "name": "punctuation.definition.comment.liquid" }
+          }
+        },
+        {
+          "name": "comment.line.liquid",
+          "match": "\\{%\\s*#.*?%\\}",
+          "captures": {
+            "0": { "name": "punctuation.definition.comment.liquid" }
+          }
+        }
+      ]
+    },
+    "liquid-tag": {
+      "patterns": [
+        {
+          "name": "meta.tag.liquid",
+          "begin": "\\{%",
+          "end": "%\\}",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.tag.begin.liquid" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.tag.end.liquid" }
+          },
+          "patterns": [
+            { "include": "#liquid-tag-content" }
+          ]
+        }
+      ]
+    },
+    "liquid-tag-content": {
+      "patterns": [
+        {
+          "comment": "Island component with name",
+          "match": "\\b(island)\\s+([\"'])([a-zA-Z][a-zA-Z0-9-_]*)([\"'])",
+          "captures": {
+            "1": { "name": "keyword.other.island.liquid" },
+            "2": { "name": "punctuation.definition.string.begin.liquid" },
+            "3": { "name": "entity.name.type.component.liquid" },
+            "4": { "name": "punctuation.definition.string.end.liquid" }
+          }
+        },
+        {
+          "comment": "Props object with properties",
+          "begin": "\\b(props)\\s*:\\s*\\{",
+          "end": "\\}",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.props.liquid" }
+          },
+          "patterns": [
+            {
+              "comment": "Prop key in props object",
+              "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*:",
+              "captures": {
+                "1": { "name": "variable.other.property.island-prop.liquid" }
+              }
+            },
+            { "include": "#liquid-expression" }
+          ]
+        },
+        {
+          "comment": "Hydrate attribute",
+          "match": "\\b(hydrate)\\s*:\\s*([\"'])(eager|lazy|idle)([\"'])",
+          "captures": {
+            "1": { "name": "keyword.other.hydrate.liquid" },
+            "2": { "name": "punctuation.definition.string.begin.liquid" },
+            "3": { "name": "constant.language.hydrate-strategy.liquid" },
+            "4": { "name": "punctuation.definition.string.end.liquid" }
+          }
+        },
+        {
+          "name": "keyword.control.liquid",
+          "match": "\\b(if|elsif|else|endif|unless|endunless|case|when|endcase|for|endfor|break|continue|tablerow|endtablerow)\\b"
+        },
+        {
+          "name": "keyword.other.liquid",
+          "match": "\\b(assign|capture|endcapture|increment|decrement|echo|render|include|liquid|endliquid|raw|endraw|cycle|comment|endcomment)\\b"
+        },
+        {
+          "name": "keyword.other.island.liquid",
+          "match": "\\b(island|endisland)\\b"
+        },
+        {
+          "name": "keyword.other.props.liquid",
+          "match": "\\b(props|hydrate)\\b"
+        },
+        {
+          "name": "constant.language.liquid",
+          "match": "\\b(true|false|nil|null)\\b"
+        },
+        {
+          "name": "constant.numeric.liquid",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        },
+        {
+          "name": "keyword.operator.liquid",
+          "match": "\\b(and|or|not|contains|in|reversed|limit|offset|cols|with|for|as)\\b"
+        },
+        {
+          "name": "keyword.operator.comparison.liquid",
+          "match": "(==|!=|<|>|<=|>=)"
+        },
+        {
+          "name": "keyword.operator.assignment.liquid",
+          "match": "="
+        },
+        {
+          "name": "punctuation.separator.liquid",
+          "match": "[,:]"
+        },
+        {
+          "name": "punctuation.section.liquid",
+          "match": "[\\[\\]{}()]"
+        },
+        {
+          "comment": "Liquid filter with pipe operator",
+          "match": "(\\|)\\s*([a-zA-Z_][a-zA-Z0-9_-]*)",
+          "captures": {
+            "1": { "name": "keyword.operator.filter.liquid" },
+            "2": { "name": "support.function.filter.liquid" }
+          }
+        },
+        {
+          "comment": "Property access (member access)",
+          "match": "\\.([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "variable.other.property.liquid" }
+          }
+        },
+        {
+          "name": "variable.other.liquid",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_-]*\\b"
+        },
+        { "include": "#string" }
+      ]
+    },
+    "liquid-output": {
+      "patterns": [
+        {
+          "name": "meta.output.liquid",
+          "begin": "\\{\\{",
+          "end": "\\}\\}",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.output.begin.liquid" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.output.end.liquid" }
+          },
+          "patterns": [
+            { "include": "#liquid-expression" }
+          ]
+        }
+      ]
+    },
+    "liquid-expression": {
+      "patterns": [
+        {
+          "name": "constant.language.liquid",
+          "match": "\\b(true|false|nil|null)\\b"
+        },
+        {
+          "name": "constant.numeric.liquid",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        },
+        {
+          "name": "keyword.operator.comparison.liquid",
+          "match": "(==|!=|<|>|<=|>=)"
+        },
+        {
+          "name": "keyword.operator.liquid",
+          "match": "\\b(and|or|not|contains)\\b"
+        },
+        {
+          "comment": "Liquid filter with pipe operator",
+          "match": "(\\|)\\s*([a-zA-Z_][a-zA-Z0-9_-]*)",
+          "captures": {
+            "1": { "name": "keyword.operator.filter.liquid" },
+            "2": { "name": "support.function.filter.liquid" }
+          }
+        },
+        {
+          "comment": "Array/Object indexing",
+          "match": "\\[([a-zA-Z_][a-zA-Z0-9_-]*)\\]",
+          "captures": {
+            "1": { "name": "variable.other.property.liquid" }
+          }
+        },
+        {
+          "comment": "Property access with dot notation",
+          "match": "\\.([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "variable.other.property.liquid" }
+          }
+        },
+        {
+          "comment": "Variable names (base objects)",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_-]*)(?=\\.)",
+          "captures": {
+            "1": { "name": "variable.other.object.liquid" }
+          }
+        },
+        {
+          "name": "variable.other.liquid",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_-]*\\b"
+        },
+        {
+          "name": "punctuation.separator.liquid",
+          "match": "[,:]"
+        },
+        {
+          "name": "punctuation.section.liquid",
+          "match": "[\\[\\]{}()]"
+        },
+        { "include": "#string" }
+      ]
+    },
+    "string": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.liquid",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.liquid",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.liquid",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.liquid",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "html": {
+      "patterns": [
+        {
+          "name": "meta.tag.html",
+          "begin": "</?([a-zA-Z][a-zA-Z0-9-]*)",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.tag.html" },
+            "1": { "name": "entity.name.tag.html" }
+          },
+          "end": "/?>",
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.tag.html" }
+          },
+          "patterns": [
+            {
+              "name": "entity.other.attribute-name.html",
+              "match": "\\b[a-zA-Z-]+\\b"
+            },
+            { "include": "#string" }
+          ]
+        },
+        {
+          "name": "comment.block.html",
+          "begin": "<!--",
+          "end": "-->",
+          "captures": {
+            "0": { "name": "punctuation.definition.comment.html" }
+          }
+        }
+      ]
+    }
+  }
+}

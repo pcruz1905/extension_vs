@@ -7,6 +7,10 @@ dist/
 out/
 **/src/generated
 
-syntaxes/
+# Ignore extension's syntaxes (copied during build)
+packages/langium-liquid-extension/syntaxes/
+# But keep language's syntaxes (manually maintained)
+!packages/language/syntaxes/
+
 *.tsbuildinfo
 *.vsix

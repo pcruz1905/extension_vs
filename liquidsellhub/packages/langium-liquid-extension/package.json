@@ -1,109 +1,127 @@
 {
-    "name": "vscode-sellhub-liquid",
-    "description": "The extension specific package",
-    "version": "0.0.1",
-    "displayName": "sellhub-liquid",
-    "publisher": "sellhubb",
-    "type": "module",
-    "engines": {
-        "vscode": "^1.67.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sellhubb/sellhub-liquid.git"
-    },
-    "categories": [
-        "Programming Languages"
+  "name": "vscode-sellhub-liquid",
+  "description": "VS Code extension for Sellhub Liquid syntax highlighting and component management",
+  "version": "0.0.1",
+  "displayName": "Sellhub Liquid",
+  "publisher": "sellhubb",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.67.0"
+  },
+  "icon": "src/extension/assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sellhubb/sellhub-liquid.git"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sellhub-liquid",
+        "aliases": [
+          "Sellhub Liquid",
+          "sellhub-liquid"
+        ],
+        "extensions": [
+          ".liquid"
+        ],
+        "filenamePatterns": [
+          "*.liquid"
+        ],
+        "configuration": "./language-configuration.json"
+      }
     ],
-    "contributes": {
-        "languages": [{
-            "id": "sellhub-liquid",
-            "aliases": ["Sellhub Liquid", "sellhub-liquid"],
-            "extensions": [".liquid"],
-            "filenamePatterns": ["*.liquid"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "sellhub-liquid",
-            "scopeName": "source.sellhub-liquid",
-            "path": "syntaxes/sellhub-liquid.tmLanguage.json"
-        }],
-        "configuration": {
-            "title": "Sellhubb",
-            "properties": {
-                "sellhubb.enableLanguageServer": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable Sellhubb Liquid language server features (autocomplete, validation, etc.)"
-                },
-                "sellhubb.r2AccountId": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Cloudflare R2 Account ID for Islands component metadata"
-                },
-                "sellhubb.r2AccessKeyId": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Cloudflare R2 Access Key ID"
-                },
-                "sellhubb.r2SecretAccessKey": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Cloudflare R2 Secret Access Key"
-                },
-                "sellhubb.r2BucketName": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Cloudflare R2 Bucket Name containing component metadata"
-                }
-            }
+    "grammars": [
+      {
+        "language": "sellhub-liquid",
+        "scopeName": "source.sellhub-liquid",
+        "path": "syntaxes/sellhub-liquid.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sellhub-liquid",
+        "path": "./snippets/liquid.json"
+      }
+    ],
+    "configuration": {
+      "title": "Sellhubb",
+      "properties": {
+        "sellhubb.enableLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Sellhubb Liquid language server features (autocomplete, validation, etc.)"
         },
-        "commands": [
-            {
-                "command": "sellhubb.refreshCache",
-                "title": "Sellhubb: Refresh Component Cache",
-                "category": "Sellhubb"
-            },
-            {
-                "command": "sellhubb.syncComponents",
-                "title": "Sellhubb: Sync Components from R2",
-                "category": "Sellhubb"
-            },
-            {
-                "command": "sellhubb.showCacheStats",
-                "title": "Sellhubb: Show Cache Statistics",
-                "category": "Sellhubb"
-            },
-            {
-                "command": "sellhubb.testConnection",
-                "title": "Sellhubb: Test R2 Connection",
-                "category": "Sellhubb"
-            }
-        ]
+        "sellhubb.r2AccountId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Account ID for Islands component metadata"
+        },
+        "sellhubb.r2AccessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Access Key ID"
+        },
+        "sellhubb.r2SecretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Secret Access Key"
+        },
+        "sellhubb.r2BucketName": {
+          "type": "string",
+          "default": "",
+          "description": "Cloudflare R2 Bucket Name containing component metadata"
+        }
+      }
     },
-    "activationEvents": [
-        "onLanguage:sellhub-liquid"
-    ],
-    "main": "./out/extension/main.cjs",
-    "scripts": {
-        "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
-        "vscode:prepublish": "npm run build",
-        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/sellhub-liquid.tmLanguage.json ./syntaxes/sellhub-liquid.tmLanguage.json",
-        "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
-        "build:clean": "npm run clean && npm run build",
-        "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
-    },
-    "dependencies": {
-        "sellhub-liquid-language": "0.0.1",
-        "vscode-languageclient": "~9.0.1",
-        "vscode-languageserver": "~9.0.1"
-    },
-    "devDependencies": {
-        "@types/vscode": "~1.67.0",
-        "concurrently": "~8.2.1",
-        "esbuild": "~0.25.5"
-    },
-    "vsce": {
-      "dependencies": false
-    }
+    "commands": [
+      {
+        "command": "sellhubb.refreshCache",
+        "title": "Sellhubb: Refresh Component Cache",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.syncComponents",
+        "title": "Sellhubb: Sync Components from R2",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.showCacheStats",
+        "title": "Sellhubb: Show Cache Statistics",
+        "category": "Sellhubb"
+      },
+      {
+        "command": "sellhubb.testConnection",
+        "title": "Sellhubb: Test R2 Connection",
+        "category": "Sellhubb"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onLanguage:sellhub-liquid"
+  ],
+  "main": "./out/extension/main.cjs",
+  "scripts": {
+    "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
+    "vscode:prepublish": "npm run build",
+    "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/sellhub-liquid.tmLanguage.json ./syntaxes/sellhub-liquid.tmLanguage.json",
+    "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
+    "build:clean": "npm run clean && npm run build",
+    "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
+  },
+  "dependencies": {
+    "sellhub-liquid-language": "0.0.1",
+    "vscode-languageclient": "~9.0.1",
+    "vscode-languageserver": "~9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "~1.67.0",
+    "concurrently": "~8.2.1",
+    "esbuild": "~0.25.5"
+  },
+  "vsce": {
+    "dependencies": false
+  }
 }

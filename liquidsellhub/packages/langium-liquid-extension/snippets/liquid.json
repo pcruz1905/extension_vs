@@ -1,0 +1,175 @@
+{
+    "Island Block": {
+        "prefix": "island",
+        "body": [
+            "{% island \"${1:component-name}\", props: { ${2} }, hydrate: \"${3|eager,lazy,idle|}\" %}",
+            "\t$0",
+            "{% endisland %}"
+        ],
+        "description": "Insert island component block"
+    },
+    "Island Simple": {
+        "prefix": "islands",
+        "body": [
+            "{% island \"${1:component-name}\" %}",
+            "\t$0",
+            "{% endisland %}"
+        ],
+        "description": "Insert simple island component block"
+    },
+    "For Loop": {
+        "prefix": "for",
+        "body": [
+            "{% for ${1:item} in ${2:collection} %}",
+            "\t$0",
+            "{% endfor %}"
+        ],
+        "description": "Insert for loop"
+    },
+    "For Loop with Limit": {
+        "prefix": "forlimit",
+        "body": [
+            "{% for ${1:item} in ${2:collection} limit: ${3:10} %}",
+            "\t$0",
+            "{% endfor %}"
+        ],
+        "description": "Insert for loop with limit"
+    },
+    "If Statement": {
+        "prefix": "if",
+        "body": [
+            "{% if ${1:condition} %}",
+            "\t$0",
+            "{% endif %}"
+        ],
+        "description": "Insert if statement"
+    },
+    "If-Else Statement": {
+        "prefix": "ifelse",
+        "body": [
+            "{% if ${1:condition} %}",
+            "\t${2}",
+            "{% else %}",
+            "\t$0",
+            "{% endif %}"
+        ],
+        "description": "Insert if-else statement"
+    },
+    "If-Elsif-Else Statement": {
+        "prefix": "ifelif",
+        "body": [
+            "{% if ${1:condition} %}",
+            "\t${2}",
+            "{% elsif ${3:condition} %}",
+            "\t${4}",
+            "{% else %}",
+            "\t$0",
+            "{% endif %}"
+        ],
+        "description": "Insert if-elsif-else statement"
+    },
+    "Unless Statement": {
+        "prefix": "unless",
+        "body": [
+            "{% unless ${1:condition} %}",
+            "\t$0",
+            "{% endunless %}"
+        ],
+        "description": "Insert unless statement"
+    },
+    "Case Statement": {
+        "prefix": "case",
+        "body": [
+            "{% case ${1:variable} %}",
+            "{% when ${2:value} %}",
+            "\t${3}",
+            "{% when ${4:value} %}",
+            "\t${5}",
+            "{% else %}",
+            "\t$0",
+            "{% endcase %}"
+        ],
+        "description": "Insert case statement"
+    },
+    "Assign Variable": {
+        "prefix": "assign",
+        "body": "{% assign ${1:variable} = ${2:value} %}",
+        "description": "Assign a variable"
+    },
+    "Capture": {
+        "prefix": "capture",
+        "body": [
+            "{% capture ${1:variable} %}",
+            "\t$0",
+            "{% endcapture %}"
+        ],
+        "description": "Capture content into variable"
+    },
+    "Comment Block": {
+        "prefix": "comment",
+        "body": [
+            "{% comment %}",
+            "\t$0",
+            "{% endcomment %}"
+        ],
+        "description": "Insert comment block"
+    },
+    "Raw Block": {
+        "prefix": "raw",
+        "body": [
+            "{% raw %}",
+            "\t$0",
+            "{% endraw %}"
+        ],
+        "description": "Insert raw (unprocessed) block"
+    },
+    "Render": {
+        "prefix": "render",
+        "body": "{% render '${1:template-name}'${2:, ${3:variable}: ${4:value}} %}",
+        "description": "Render a template"
+    },
+    "Include": {
+        "prefix": "include",
+        "body": "{% include '${1:template-name}'${2:, ${3:variable}: ${4:value}} %}",
+        "description": "Include a template"
+    },
+    "Echo": {
+        "prefix": "echo",
+        "body": "{% echo ${1:variable} %}",
+        "description": "Output a variable"
+    },
+    "Tablerow": {
+        "prefix": "tablerow",
+        "body": [
+            "{% tablerow ${1:item} in ${2:collection} cols: ${3:3} %}",
+            "\t$0",
+            "{% endtablerow %}"
+        ],
+        "description": "Insert table row loop"
+    },
+    "Cycle": {
+        "prefix": "cycle",
+        "body": "{% cycle ${1:'odd'}, ${2:'even'} %}",
+        "description": "Cycle through values"
+    },
+    "Break": {
+        "prefix": "break",
+        "body": "{% break %}",
+        "description": "Break out of loop"
+    },
+    "Continue": {
+        "prefix": "continue",
+        "body": "{% continue %}",
+        "description": "Continue to next iteration"
+    },
+    "Output Variable": {
+        "prefix": "out",
+        "body": "{{ ${1:variable} }}",
+        "description": "Output a variable"
+    },
+    "Output with Filter": {
+        "prefix": "outf",
+        "body": "{{ ${1:variable} | ${2:filter} }}",
+        "description": "Output a variable with filter"
+    }
+}

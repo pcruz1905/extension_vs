@@ -10,13 +10,14 @@
             "type": "extensionHost",
             "request": "launch",
             "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}/packages/extension"
+                "--extensionDevelopmentPath=${workspaceFolder}/packages/langium-liquid-extension"
             ],
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceFolder}/packages/language/out/**/*.js",
-                "${workspaceFolder}/packages/extension/out/**/*.js"
-            ]
+                "${workspaceFolder}/packages/langium-liquid-extension/out/**/*.js"
+            ],
+            "preLaunchTask": "Build sellhub-liquid"
         },
         {
             "name": "Attach to Language Server",

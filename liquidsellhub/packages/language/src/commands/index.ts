@@ -13,34 +13,48 @@ export class CommandHandler {
     private configService: ConfigService;
 
     constructor(connection: Connection, r2Client: R2Client, configService: ConfigService) {
+        console.log('🎮 [CommandHandler] Constructor called');
         this.connection = connection;
         this.r2Client = r2Client;
         this.configService = configService;
+        console.log('✅ [CommandHandler] Constructor completed - connection, r2Client, and configService initialized');
     }
 
     /**
      * Register all custom commands
      */
     public registerCommands(): void {
+        console.log('📝 [CommandHandler] Registering all custom commands...');
+
         // Refresh cache command
+        console.log('📝 [CommandHandler] Registering: sellhubb/refreshCache');
         this.connection.onRequest('sellhubb/refreshCache', async () => {
+            console.log('📨 [CommandHandler] Received request: sellhubb/refreshCache');
             return this.handleRefreshCache();
         });
 
         // Sync components command
+        console.log('📝 [CommandHandler] Registering: sellhubb/syncComponents');
         this.connection.onRequest('sellhubb/syncComponents', async () => {
+            console.log('📨 [CommandHandler] Received request: sellhubb/syncComponents');
             return this.handleSyncComponents();
         });
 
         // Show cache stats command
+        console.log('📝 [CommandHandler] Registering: sellhubb/showCacheStats');
         this.connection.onRequest('sellhubb/showCacheStats', async () => {
+            console.log('📨 [CommandHandler] Received request: sellhubb/showCacheStats');
             return this.handleShowCacheStats();
         });
 
         // Test R2 connection command
+        console.log('📝 [CommandHandler] Registering: sellhubb/testConnection');
         this.connection.onRequest('sellhubb/testConnection', async () => {
+            console.log('📨 [CommandHandler] Received request: sellhubb/testConnection');
             return this.handleTestConnection();
         });
+
+        console.log('✅ [CommandHandler] All commands registered successfully!');
     }
 
     /**
@@ -111,31 +125,43 @@ export class CommandHandler {
      * Handle test connection command
      */
     private async handleTestConnection(): Promise<{ success: boolean; message: string }> {
+        console.log('🧪 [CommandHandler] handleTestConnection() called');
+
         try {
+            console.log('🔍 [CommandHandler] Validating configuration...');
             // Validate configuration
             if (!this.configService.isValid()) {
+                console.error('❌ [CommandHandler] Configuration validation FAILED');
                 const errors = this.configService.getValidationErrors();
+                console.error('❌ [CommandHandler] Validation errors:', errors);
                 return {
                     success: false,
                     message: `Configuration invalid:\n${errors.join('\n')}`
                 };
             }
 
+            console.log('✅ [CommandHandler] Configuration is valid');
+            console.log('🌐 [CommandHandler] Testing R2 connection...');
+
             // Test connection
             const connected = await this.r2Client.testConnection();
 
             if (connected) {
+                console.log('✅ [CommandHandler] Connection test PASSED');
                 return {
                     success: true,
                     message: 'Successfully connected to R2 bucket'
                 };
             } else {
+                console.error('❌ [CommandHandler] Connection test FAILED');
                 return {
                     success: false,
                     message: 'Failed to connect to R2 bucket. Please check your credentials.'
                 };
             }
         } catch (error: any) {
+            console.error('❌ [CommandHandler] FATAL ERROR in handleTestConnection');
+            console.error('❌ [CommandHandler] Error:', error);
             return {
                 success: false,
                 message: `Connection test failed: ${error.message}`

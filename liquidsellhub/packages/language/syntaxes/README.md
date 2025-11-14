@@ -7,6 +7,7 @@
 The `sellhub-liquid.tmLanguage.json` file in this directory is a custom TextMate grammar that provides comprehensive syntax highlighting for Sellhub Liquid templates.
 
 Langium can auto-generate basic syntax highlighting, but it doesn't support the complex patterns we need for:
+
 - Proper Liquid tag highlighting ({% %})
 - Liquid output highlighting ({{ }})
 - Island component syntax
@@ -50,6 +51,7 @@ To update the syntax highlighting:
 After modifying the syntax file:
 
 1. Rebuild the extension:
+
    ```bash
    npm run build
    ```

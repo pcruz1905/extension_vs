@@ -1,0 +1,13 @@
+{
+    "projectName": "SellhubLiquid",
+    "languages": [
+        {
+            "id": "sellhub-liquid",
+            "grammar": "src/sellhub-liquid.langium",
+            "fileExtensions": [
+                "liquid"
+            ]
+        }
+    ],
+    "out": "src/generated"
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="{{ shop.locale }}">
+<head>
+    <title>{{ page.title }}</title>
+</head>
+<body>
+    <h1>Test Island Components</h1>
+
+    {%  comment  %}
+
+    {% endcomment %}
+
+    <!-- Example 1: Basic island component -->
+    {% island "site-footer", props: { shopName: shop.name, year: "2025" }, hydrate: "lazy" %}
+    {% endisland %}
+
+    <!-- Example 2: Island in a loop -->
+    {% for product in collection.products %}
+        {% island "price-display", props: {
+            amount: product.price,
+            productId: product.id,
+            currency: "USD"
+        }, hydrate: "eager" %}
+        {% endisland %}
+    {% endfor %}
+
+    <!-- Try typing here to test autocomplete -->
+    <!-- Type: {% island " -->
+
+
+</body>
+</html>

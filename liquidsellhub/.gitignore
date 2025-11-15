@@ -1,0 +1,16 @@
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+node_modules/
+dist/
+out/
+**/src/generated
+
+# Ignore extension's syntaxes (copied during build)
+packages/langium-liquid-extension/syntaxes/
+# But keep language's syntaxes (manually maintained)
+!packages/language/syntaxes/
+
+*.tsbuildinfo
+*.vsix

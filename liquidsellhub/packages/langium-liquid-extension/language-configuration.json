@@ -1,0 +1,50 @@
+{
+    "comments": {
+        "blockComment": [ "{%", "%}" ]
+    },
+    "brackets": [
+        ["{%", "%}"],
+        ["{{", "}}"],
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        { "open": "{%", "close": "%}" },
+        { "open": "{{", "close": "}}" },
+        { "open": "{", "close": "}" },
+        { "open": "[", "close": "]" },
+        { "open": "(", "close": ")" },
+        { "open": "\"", "close": "\"", "notIn": ["string"] },
+        { "open": "'", "close": "'", "notIn": ["string"] }
+    ],
+    "surroundingPairs": [
+        ["{%", "%}"],
+        ["{{", "}}"],
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["'", "'"]
+    ],
+    "folding": {
+        "markers": {
+            "start": "^\\s*{%\\s*(if|unless|for|case|tablerow|capture|block|island|comment|raw)\\b",
+            "end": "^\\s*{%\\s*(endif|endunless|endfor|endcase|endtablerow|endcapture|endblock|endisland|endcomment|endraw)\\b"
+        }
+    },
+    "indentationRules": {
+        "increaseIndentPattern": "^\\s*{%\\s*(if|unless|for|case|tablerow|capture|block|island|comment|raw)\\b.*%}\\s*$",
+        "decreaseIndentPattern": "^\\s*{%\\s*(endif|endunless|endfor|endcase|endtablerow|endcapture|endblock|endisland|endcomment|endraw|else|elsif|when)\\b.*%}\\s*$"
+    },
+    "onEnterRules": [
+        {
+            "beforeText": "^\\s*{%\\s*(if|unless|for|case|tablerow|capture|block|island|comment|raw)\\b.*%}\\s*$",
+            "action": { "indent": "indent" }
+        },
+        {
+            "beforeText": "^\\s*{%\\s*(endif|endunless|endfor|endcase|endtablerow|endcapture|endblock|endisland|endcomment|endraw)\\b.*%}\\s*$",
+            "action": { "indent": "outdent" }
+        }
+    ]
+}
